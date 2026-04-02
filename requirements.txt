@@ -1,0 +1,4 @@
+pandas>=2.2,<3.0
+Pillow>=10.0,<13.0
+streamlit>=1.43,<2.0
+xlsxwriter>=3.2,<4.0
