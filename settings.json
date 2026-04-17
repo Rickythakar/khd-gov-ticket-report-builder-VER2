@@ -1,0 +1,44 @@
+{
+  "mode": "customer",
+  "export": {
+    "include_pdf": true,
+    "include_workbook": true
+  },
+  "sla_targets": {
+    "Critical": 60,
+    "High": 240,
+    "Medium": 480,
+    "Low": 1440,
+    "None": 1440
+  },
+  "sla_queue_overrides": {},
+  "expert_mode": false,
+  "noise_filter": {
+    "hide_spam": false,
+    "hide_sync_errors": false
+  },
+  "danger_zone_threshold": 3,
+  "ai": {
+    "enabled": true,
+    "provider": "chatgpt_oauth",
+    "endpoint": "",
+    "base_url": "",
+    "api_key": "",
+    "organization": "",
+    "project": "",
+    "deployment": "gpt-5.4",
+    "reasoning_effort": "high",
+    "api_version": "2026-02-01",
+    "max_calls_per_run": 50,
+    "features": {
+      "sentiment": true,
+      "categorization": true,
+      "executive_summary": true,
+      "anomaly_narration": true,
+      "prediction": true
+    },
+    "tone": "formal",
+    "custom_instructions": "",
+    "chatgpt_connected": true
+  }
+}

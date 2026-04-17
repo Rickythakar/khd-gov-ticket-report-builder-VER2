@@ -1,0 +1,2426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ app_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ASCII-BRUTALIST DESIGN SYSTEM v3
+   Bloomberg terminal x Luxury tech brand
+   Dense. Sharp. Tasteful.
+   ============================================================ */
+:root {
+  --bg: #030303;
+  --surface: #0a0a0a;
+  --surface-hover: #111111;
+  --raised: #161616;
+  --border: #1f1f1f;
+  --border-hi: #333333;
+  
+  --amber: #ffb800;
+  --amber-dim: rgba(255, 184, 0, 0.15);
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, 0.15);
+  --blue: #0066ff;
+  --green: #00fa9a;
+  --red: #ff3366;
+  
+  --text: #a0aab2;
+  --bright: #ffffff;
+  --dim: #55626d;
+  --faint: #2a3238;
+  
+  --font: 'JetBrains Mono', monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -12px -12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--cyan-dim); color: var(--cyan); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+/* ---- LAYOUT ---- */
+.app { display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.side {
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+  transition: width 0.3s var(--ease);
+}
+.side.collapsed {
+  width: 72px;
+}
+.side-inner {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  transition: padding 0.3s var(--ease);
+}
+.side.collapsed .side-inner {
+  padding: 24px 14px;
+}
+
+
+/* Sidebar Toggle Handle */
+.sidebar-handle {
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 64px;
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-left: none;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  font-size: 10px;
+  z-index: 100;
+  transition: all 0.2s var(--ease);
+}
+.sidebar-handle:hover {
+  background: var(--raised);
+  color: var(--cyan);
+  border-color: var(--cyan);
+  width: 18px;
+  right: -18px;
+}
+.sidebar-handle .ico { transition: transform 0.3s var(--ease); }
+.side.collapsed .sidebar-handle .ico { transform: rotate(180deg); }
+
+/* Collapsed Brand */
+.side.collapsed .brand { justify-content: center; padding-bottom: 24px; gap: 0; }
+.side.collapsed .brand-name { opacity: 0; position: absolute; pointer-events: none; width: 0; }
+.brand-mark { transition: transform 0.3s var(--ease); }
+.side.collapsed .brand-mark { transform: scale(0.9); margin-left: -2px; }
+
+/* Collapsed Dropzone */
+.side.collapsed .drop-text, .side.collapsed .drop-file { display: none; }
+.side.collapsed .drop { padding: 16px 0; }
+.side.collapsed .drop-icon { margin-bottom: 0; font-size: 20px; line-height: 1; }
+
+/* Collapsed Buttons */
+.side.collapsed .s-btn-txt { display: none; }
+.s-btn-icn { display: none; font-size: 16px; line-height: 1; }
+.side.collapsed .s-btn-icn { display: inline-block; }
+.side.collapsed .s-btn { padding: 12px 0; display: flex; justify-content: center; align-items: center; }
+
+
+
+
+.side.collapsed 
+
+
+
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-mark {
+  font-size: 26px;
+  font-weight: 800;
+  color: #020a1c; /* Deep navy text */
+  background: #89CFF0; /* Baby blue fill */
+  border: 1px solid #89CFF0;
+  padding: 4px 10px;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: crosshair;
+  /* Brutalist cut corner */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: background 0s, color 0s, box-shadow 0s, border-color 0s;
+  width: 44px;
+  height: 38px;
+}
+
+/* Hover state: Switch to matrix green on dark background */
+.brand-mark:hover {
+  background: #020a1c;
+  color: #00fa9a; /* Matrix green */
+  border-color: #00fa9a;
+  box-shadow: inset 0 0 10px rgba(0, 250, 154, 0.1), 0 0 15px rgba(0, 250, 154, 0.2);
+}
+
+
+/* Typographic character-scramble Matrix Glitch */
+.brand-mark::after {
+  content: "01";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: #020a1c;
+  color: #00fa9a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  letter-spacing: -1px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.brand-mark:hover::after {
+  animation: hacker-scramble 0.25s steps(1) forwards;
+}
+
+@keyframes hacker-scramble {
+  0%   { content: "01"; opacity: 1; }
+  20%  { content: "10"; opacity: 1; }
+  40%  { content: "0x"; opacity: 1; }
+  60%  { content: "F#"; opacity: 1; }
+  80%  { content: "11"; opacity: 1; text-shadow: 0 0 8px rgba(0,250,154,0.5); }
+  100% { opacity: 0; }
+}
+
+/* Remove old pseudo elements and slice animations */
+
+.brand-name { font-size: 10px; color: var(--dim); letter-spacing: 0.25em; text-transform: uppercase; line-height: 1.5; }
+.brand-name b { color: var(--bright); font-weight: 700; display: block; font-size: 12px; letter-spacing: 0.15em; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+
+
+
+/* Upload */
+.drop {
+  border: 1px dashed var(--border-hi);
+  background: rgba(255,255,255,0.01);
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s var(--ease);
+}
+.side.collapsed .drop { padding: 16px 0; display: flex; align-items: center; justify-content: center; }
+.drop:hover { border-color: var(--cyan); background: var(--cyan-dim); }
+.drop.loaded { 
+  border-color: var(--cyan); 
+  border-style: solid; 
+  background: rgba(0, 229, 255, 0.02); 
+  animation: drop-pulse 6s infinite ease-in-out;
+}
+@keyframes drop-pulse {
+  0%, 100% { box-shadow: inset 0 0 0px rgba(0,229,255,0); border-color: var(--border-hi); }
+  50% { box-shadow: inset 0 0 15px rgba(0,229,255,0.1); border-color: var(--cyan); }
+}
+.drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop-icon { color: var(--dim); font-size: 16px; margin-bottom: 6px; transition: color 0.2s; line-height: 1; }
+.side.collapsed .drop-icon { margin-bottom: 0; font-size: 20px; }
+.drop:hover .drop-icon { color: var(--cyan); }
+.drop-text { color: var(--cyan); font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 8px; transition: opacity 0.2s; }
+.drop-file { color: var(--bright); font-size: 9px; word-break: break-all; font-weight: 400; letter-spacing: 0.05em; transition: opacity 0.2s; }
+.side.collapsed .drop-text, .side.collapsed .drop-file { display: none; }
+
+/* Mode */
+.mode-label { font-size: 9px; color: var(--dim); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: -8px; }
+.mode-row { display: flex; border: 1px solid var(--border); }
+.mode-btn {
+  flex: 1;
+  padding: 8px 4px;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:last-child { border-right: none; }
+.mode-btn:hover { color: var(--bright); background: var(--raised); }
+.mode-btn.on { color: var(--bg); background: var(--amber); }
+
+.spacer { flex: 1; }
+
+/* Sidebar buttons */
+.side-actions { display: flex; flex-direction: column; gap: 8px; }
+.s-btn {
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 10px;
+  border: 1px solid var(--border-hi);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.s-btn::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.4s var(--ease);
+}
+.s-btn:hover::before { left: 100%; }
+.s-btn:hover { border-color: var(--bright); color: var(--bright); background: var(--raised); }
+.s-btn.pri { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+.s-btn.pri:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 15px var(--cyan-dim); }
+.s-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+/* ---- MAIN ---- */
+.main { flex: 1; padding: 24px 32px; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+
+/* Header */
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-hi);
+  margin-bottom: 24px;
+}
+.head-title { font-size: 14px; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--bright); display: flex; align-items: center; gap: 12px; }
+.head-title::before { content: ""; display: block; width: 12px; height: 12px; background: var(--amber); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.head-meta { display: flex; gap: 16px; font-size: 11px; }
+.tag { color: var(--dim); display: flex; align-items: center; gap: 6px; }
+.tag::before { content: "///"; color: var(--border-hi); letter-spacing: -1px; }
+.tag.hi { color: var(--cyan); font-weight: 700; }
+.tag.hi::before { color: var(--cyan); }
+
+
+/* ---- METRIC GRID (Top Row) ---- */
+.grid-top {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.m-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 16px 16px 20px 16px;
+  position: relative;
+  transition: all 0.2s var(--ease);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 90px;
+}
+.m-card::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--border-hi); transition: background 0.2s;
+}
+.m-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); border-color: var(--border-hi); }
+.m-card:hover::before { background: var(--cyan); }
+.m-card:nth-child(4n+1):hover::before { background: var(--cyan); }
+.m-card:nth-child(4n+2):hover::before { background: var(--blue); }
+.m-card:nth-child(4n+3):hover::before { background: var(--amber); }
+.m-card:nth-child(4n+4):hover::before { background: var(--green); }
+
+.m-label { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; z-index: 2; position: relative; }
+.m-val { font-size: 32px; font-weight: 300; color: var(--bright); line-height: 1; letter-spacing: -1px; z-index: 2; position: relative; }
+.m-val .unit { font-size: 12px; font-weight: 400; color: var(--dim); margin-left: 2px; }
+.m-spark-svg { position: absolute; bottom: 12px; right: 12px; opacity: 0.4; transition: opacity 0.2s; z-index: 1; pointer-events: none; }
+.m-card:hover .m-spark-svg { opacity: 1; }
+
+.m-tooltip {
+  display: none;
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--border-hi);
+  padding: 4px 8px;
+  font-size: 9px;
+  color: var(--amber);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+}
+.m-card:hover .m-tooltip { display: block; }
+.m-delta { font-size: 10px; font-weight: 600; margin-left: 4px; letter-spacing: 0; }
+.delta-up { color: var(--green); }
+.delta-dn { color: var(--red); }
+/* Invert for metrics where down is good (escalation rate, resolution time) */
+.m-card[data-metric-invert="true"] .delta-up { color: var(--red); }
+.m-card[data-metric-invert="true"] .delta-dn { color: var(--green); }
+
+/* ---- COMMAND CENTER GRID ---- */
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.panel::before {
+  content: "";
+  position: absolute; top: 0; left: 0; height: 100%; width: 2px;
+  background: var(--cyan);
+  opacity: 0; transition: opacity 0.2s;
+}
+.panel:hover::before { opacity: 1; }
+.panel.span-2 { grid-column: 1 / -1; }
+.panel:hover { border-color: var(--cyan); box-shadow: 0 4px 20px rgba(0,229,255,0.05); }
+
+.panel-trigger {
+  padding: 16px;
+  cursor: crosshair;
+  background: var(--surface);
+  transition: background 0.2s;
+  border-bottom: 1px solid transparent;
+}
+.panel:hover .panel-trigger { background: var(--surface-hover); }
+.panel.open .panel-trigger { border-bottom-color: var(--border); background: var(--raised); }
+
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.p-title { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bright); display: flex; align-items: center; gap: 8px; }
+.p-title .dot { display: inline-block; width: 6px; height: 6px; background: var(--cyan); transition: transform 0.2s, background 0.2s; }
+.panel.open .p-title .dot { transform: scale(1.5); background: var(--green); }
+.p-title .dot.warn { background: var(--amber); }
+.panel.open .p-title .dot.warn { background: var(--amber); }
+.p-title .dot.bad { background: var(--red); }
+.panel.open .p-title .dot.bad { background: var(--red); }
+
+.p-meta { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; }
+.p-arrow { color: var(--dim); transition: transform 0.2s, color 0.2s; font-size: 10px; }
+.panel:hover .p-arrow { color: var(--cyan); }
+.panel.open .p-arrow { transform: rotate(90deg); color: var(--green); }
+
+/* ---- PANEL PREVIEW STYLES ---- */
+.panel-preview { display: flex; flex-direction: column; gap: 8px; }
+.pv-metric { display: flex; align-items: baseline; justify-content: space-between; }
+.pv-lbl { font-size: 9px; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; }
+.pv-val { font-size: 20px; color: var(--bright); font-weight: 300; letter-spacing: -0.5px; }
+.pv-val-sub { font-size: 10px; color: var(--cyan); margin-left: 6px; font-weight: 600; }
+.pv-bar-wrap { height: 4px; background: var(--faint); width: 100%; overflow: hidden; display: flex; }
+.pv-bar { height: 100%; transition: width 0.8s var(--ease); }
+
+.panel-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s var(--ease);
+}
+.panel.open .panel-body-wrap { grid-template-rows: 1fr; }
+.panel-body {
+  padding: 0 16px;
+  overflow: hidden;
+  transition: padding 0.4s var(--ease);
+}
+.panel.open .panel-body { padding: 16px; }
+
+/* ASCII Loader */
+.ascii-loader {
+  font-family: var(--font);
+  font-size: 10px;
+  color: var(--cyan);
+  white-space: pre-wrap;
+  display: none;
+  padding: 24px 0;
+  text-align: left;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+.panel.loading .ascii-loader { display: block; }
+.panel.loading .panel-content { display: none; }
+.panel.open .panel-content {
+  display: block;
+  animation: data-reveal 0.6s var(--ease) forwards;
+}
+@keyframes data-reveal {
+  0% { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ---- TABLES ---- */
+.tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.tbl th {
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  padding: 8px;
+  border-bottom: 1px solid var(--border-hi);
+  white-space: nowrap;
+}
+.tbl td { padding: 8px; border-bottom: 1px solid var(--border); font-size: 11px; cursor: crosshair; transition: all 0.15s; }
+.tbl tr { transition: background 0.15s, transform 0.15s; }
+.tbl tr:hover { background: var(--cyan-dim); transform: scale(1.002); }
+.tbl tr:hover td { color: var(--bright); text-shadow: 0 0 10px rgba(0,229,255,0.4); border-bottom-color: var(--cyan); }
+.tbl tr:hover td:first-child { box-shadow: inset 4px 0 0 var(--cyan); }
+.tbl .r { text-align: right; }
+.tbl .accent { color: var(--cyan); font-weight: 600; }
+.tbl .warn-text { color: var(--amber); }
+.tbl .bad-text { color: var(--red); }
+
+/* ---- BAR CHART ---- */
+.bars { display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.bar-r { display: flex; align-items: center; gap: 12px; cursor: crosshair; }
+.bar-l { font-size: 11px; color: var(--text); min-width: 110px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.2s; }
+.bar-t { flex: 1; height: 10px; background: var(--faint); position: relative; border: 1px solid var(--border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); overflow: hidden; }
+.bar-f {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  position: absolute; left: 0; top: 0;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s;
+  min-width: 2px;
+}
+.bar-v { font-size: 10px; color: var(--bright); min-width: 32px; font-weight: 600; text-align: right; transition: text-shadow 0.2s; }
+
+.bar-r:hover .bar-l { color: var(--bright); }
+.bar-r:hover .bar-f { filter: brightness(1.5); }
+.bar-r:hover .bar-v { text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+
+
+.side-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+.side.collapsed .side-filters { display: none; }
+
+.f-lbl { font-size: 9px; color: var(--dim); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: -6px; }
+.f-row { display: flex; border: 1px solid var(--border); }
+.f-btn {
+  flex: 1; padding: 6px 2px; background: transparent; border: none; border-right: 1px solid var(--border);
+  color: var(--dim); font-family: var(--font); font-size: 9px; cursor: crosshair; transition: all 0.2s;
+  text-align: center;
+}
+.f-btn:last-child { border-right: none; }
+.f-btn:hover { background: var(--raised); color: var(--bright); }
+.f-btn.on { background: var(--cyan); color: var(--bg); font-weight: 700; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+
+.f-meta { display: flex; flex-direction: column; gap: 8px; font-size: 9px; color: var(--dim); margin-top: 8px; }
+.f-meta-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.f-clear {
+  background: rgba(255,51,102,0.05); color: var(--red); border: 1px solid var(--red);
+  padding: 6px; font-size: 9px; font-family: var(--font); cursor: crosshair; transition: all 0.2s;
+  text-align: center; letter-spacing: 0.15em; font-weight: 700; width: 100%;
+}
+.f-clear:hover { background: var(--red); color: var(--bright); box-shadow: 0 0 15px rgba(255,51,102,0.3); }
+
+/* ---- TREND LINE CHARTS (Redesign) ---- */
+.trend-chart { overflow: visible; filter: drop-shadow(0 0 8px rgba(0,229,255,0.1)); }
+.trend-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.trend-area { transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s; }
+.trend-dot { transition: r 0.2s, opacity 0.4s ease, fill 0.2s; cursor: crosshair; }
+.trend-dot:hover { r: 5; fill: var(--bright); }
+.trend-label { font-family: var(--font); font-size: 9px; fill: var(--dim); }
+.trend-val { font-family: var(--font); font-size: 10px; fill: var(--bright); font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
+.trend-grid { stroke: rgba(255,255,255,0.05); stroke-dasharray: 2 4; }
+
+/* ---- LISTS ---- */
+.lst { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lst li { font-size: 12px; line-height: 1.5; color: var(--text); padding-left: 12px; position: relative; }
+.lst li::before { content: ""; position: absolute; left: 0; top: 6px; width: 4px; height: 4px; background: var(--amber); }
+
+/* ---- TABS ---- */
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 4px; overflow-x: auto; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: var(--font);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--bright); background: var(--surface-hover); }
+.tab-btn.on { color: var(--cyan); border-color: var(--border-hi); background: var(--surface-hover); }
+.tab-panel { display: none; animation: quickFadeIn 0.2s var(--ease); }
+.tab-panel.on { display: block; }
+
+/* ---- 2-COL & 3-COL ---- */
+.c2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.c3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.stat-box { text-align: center; padding: 16px; background: var(--bg); border: 1px solid var(--border); }
+.stat-lbl { font-size: 9px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+.stat-val { font-size: 24px; font-weight: 300; color: var(--bright); letter-spacing: -1px; line-height: 1; }
+
+/* ---- EMPTY STATE ---- */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; border: 1px dashed var(--border-hi); margin-top: 24px; }
+.empty-t { font-size: 14px; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim); display: flex; align-items: center; }
+.empty-cursor { display: inline-block; width: 10px; height: 16px; background: var(--cyan); margin-left: 8px; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---- MODAL ---- */
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+  z-index: 100; align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--bg); border: 1px solid var(--border-hi); padding: 24px; min-width: 480px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+  animation: slideUp 0.3s var(--ease);
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-t { font-size: 14px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bright); margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.modal-s { font-size: 9px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.15em; margin: 16px 0 8px; }
+.modal-row { display: flex; gap: 12px; }
+.m-input {
+  flex: 1; width: 100%; background: var(--surface); border: 1px solid var(--border-hi); color: var(--bright);
+  font-family: var(--font); font-size: 11px; padding: 8px 10px; outline: none; transition: border-color 0.2s;
+}
+.m-input:focus { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
+.m-input-lbl { font-size: 9px; color: var(--dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+.modal-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text); cursor: pointer; margin: 6px 0; }
+.modal-check input { accent-color: var(--cyan); width: 14px; height: 14px; }
+
+.export-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.ex-card {
+  border: 1px solid var(--border-hi); background: var(--surface); padding: 16px 12px; text-align: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.ex-card:hover { border-color: var(--cyan); background: var(--cyan-dim); transform: translateY(-2px); }
+.ex-icon { font-size: 24px; margin-bottom: 8px; color: var(--bright); }
+.ex-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); }
+.ex-desc { font-size: 10px; color: var(--text); margin-top: 4px; }
+
+.modal-btns { display: flex; gap: 8px; margin-top: 24px; }
+.modal-btns .s-btn { flex: 1; }
+
+/* ---- AI ORB ---- */
+.ai-orb-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0 4px;
+  cursor: pointer;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.ai-orb-wrap:hover .ai-orb-ring { border-color: var(--green); box-shadow: 0 0 20px rgba(0,230,118,0.3); }
+.ai-orb-wrap:hover .ai-orb-core { color: var(--green); text-shadow: 0 0 12px rgba(0,230,118,0.6); }
+.ai-orb-wrap.active .ai-orb-ring { border-color: var(--green); }
+.ai-orb-wrap.active .ai-orb-core { color: var(--green); }
+
+.ai-orb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ai-orb-ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border-hi);
+  border-radius: 50%;
+  animation: orb-spin 8s linear infinite;
+  border-top-color: var(--cyan);
+  border-right-color: transparent;
+  transition: all 0.3s;
+}
+.ai-orb-ring.r2 {
+  inset: 4px;
+  animation: orb-spin 5s linear infinite reverse;
+  border-top-color: var(--green);
+  border-left-color: transparent;
+  border-right-color: var(--border);
+}
+@keyframes orb-spin { to { transform: rotate(360deg); } }
+
+.ai-orb-core {
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  z-index: 1;
+  transition: all 0.3s;
+}
+.ai-orb-label {
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  margin-top: 6px;
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+.ai-orb-wrap:hover .ai-orb-label { color: var(--green); }
+
+/* ---- ASK AI CHAT ---- */
+.ai-chat {
+  position: absolute;
+  bottom: 140px;
+  left: 8px;
+  right: 8px;
+  background: var(--surface);
+  border: 1px solid var(--green);
+  padding: 8px;
+  z-index: 50;
+  animation: fadeSlideIn 0.2s ease;
+}
+.ai-chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.ai-chat-log {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.ai-chat-q { color: var(--bright); margin: 4px 0 2px; }
+.ai-chat-q::before { content: "> "; color: var(--green); }
+.ai-chat-a { color: var(--text); margin: 0 0 6px; padding-left: 8px; border-left: 2px solid var(--green); }
+
+/* ---- AI ASSISTANT VIEW ---- */
+
+.ai-view {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 200px; /* sidebar width */
+  right: 0;
+  bottom: 0;
+  background: var(--bg);
+  z-index: 90;
+  overflow-y: auto;
+  padding: 20px 24px;
+  animation: fadeSlideIn 0.25s ease;
+}
+.ai-view.open { display: block; }
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.ai-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.ai-title .ai-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  margin-right: 10px;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--green); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px var(--green); }
+}
+.ai-meta { font-size: 9px; color: var(--dim); letter-spacing: 0.1em; }
+.ai-close {
+  font-family: var(--font);
+  font-size: 10px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+}
+.ai-close:hover { border-color: var(--bright); color: var(--bright); }
+
+.ai-run-btn {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: 1px solid var(--green);
+  background: rgba(0,230,118,0.08);
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.ai-run-btn:hover { background: rgba(0,230,118,0.15); box-shadow: 0 0 16px rgba(0,230,118,0.15); }
+.ai-run-btn:disabled { opacity: 0.4; cursor: default; }
+.ai-run-btn.loading { animation: ai-pulse 1.5s ease-in-out infinite; }
+@keyframes ai-pulse {
+  0%, 100% { border-color: var(--green); }
+  50% { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,212,255,0.15); }
+}
+
+.ai-status {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ai-widget {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px;
+  transition: border-color 0.2s;
+}
+.ai-widget:hover { border-color: var(--green); }
+.ai-widget.span-2 { grid-column: 1 / -1; }
+.ai-widget-title {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-widget-title::before { content: "[AI]"; color: var(--dim); font-size: 8px; }
+.ai-tag { font-size: 8px; color: var(--dim); background: rgba(0,230,118,0.06); border: 1px solid rgba(0,230,118,0.15); padding: 1px 5px; }
+
+/* ---- ANIMATIONS ---- */
+@keyframes quickFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.fade { animation: fadeSlideIn 0.5s var(--ease) forwards; opacity: 0; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.fd1 { animation-delay: 0.1s; }
+.fd2 { animation-delay: 0.2s; }
+.fd3 { animation-delay: 0.3s; }
+
+/* Stagger panels */
+.panel { opacity: 0; animation: fadeSlideIn 0.5s var(--ease) forwards; }
+.panel:nth-child(1) { animation-delay: 0.3s; }
+.panel:nth-child(2) { animation-delay: 0.4s; }
+.panel:nth-child(3) { animation-delay: 0.5s; }
+.panel:nth-child(4) { animation-delay: 0.6s; }
+.panel:nth-child(5) { animation-delay: 0.7s; }
+.panel:nth-child(6) { animation-delay: 0.8s; }
+.panel:nth-child(7) { animation-delay: 0.9s; }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ======== SIDEBAR ======== -->
+  <div class="side">
+    <button class="sidebar-handle" onclick="toggleSidebar()" title="TOGGLE SIDEBAR">
+      <span class="ico">«</span>
+    </button>
+    <div class="side-inner">
+      <div class="brand">
+        <span class="brand-mark">HD</span>
+        <span class="brand-name">KASEYA<br><b>HELP DESK</b>SERVICES</span>
+      </div>
+
+      <div class="drop {{ 'loaded' if csv_name else '' }}" id="dropZone">
+        <input type="file" accept=".csv" id="csvIn" multiple>
+        {% if csv_name %}
+          <div class="drop-icon" style="color:var(--cyan); font-size:18px;">
+            {% if file_count > 1 %}▤{% else %}■{% endif %}
+          </div>
+          <div class="drop-file">{{ csv_name }}</div>
+          <div class="drop-text">DATA LINK SECURE</div>
+        {% else %}
+          <div class="drop-icon">⇡</div>
+          <div class="drop-text" style="color:var(--dim); font-weight:400;">MOUNT DATA.CSV</div>
+        {% endif %}
+      </div>
+
+
+      {% if has_data %}
+      <div class="side-filters fade fd1">
+        <div class="f-lbl">TIME HORIZON</div>
+        <div class="f-row">
+          {% for p in ['1M','QTR','HALF','YR'] %}
+          <button class="f-btn {{ 'on' if period == p else '' }}" onclick="setPeriod('{{ p }}')">{{ p }}</button>
+          {% endfor %}
+        </div>
+        
+        {% if period == '1M' and available_months|length > 1 %}
+        <div class="f-lbl" style="margin-top:8px;">MONTH RANGE</div>
+        <div class="f-row" style="flex-wrap:wrap; border-bottom:none;">
+          {% for m in available_months %}
+          <button class="f-btn {{ 'on' if (selected_month == m or (not selected_month and loop.last)) else '' }}" onclick="setMonth('{{ m }}')" style="flex: 1 0 25%; border-bottom: 1px solid var(--border);">{{ m }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="f-meta">
+          <div class="f-meta-row">
+            {% if file_count > 1 %}<span style="color:var(--cyan);">{{ file_count }} ARCHIVES</span>{% else %}<span>1 ARCHIVE</span>{% endif %}
+            {% if comp.has_comparison %}<span>{{ comp.month_count }} MONTHS</span>{% endif %}
+          </div>
+          <button class="f-clear" onclick="clearData()">[ CLEAR ]</button>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="spacer"></div>
+
+      {% if ai_enabled and has_data and mode == MODE_INTERNAL %}
+      <div class="ai-orb-wrap" id="aiToggleBtn">
+        <div class="ai-orb">
+          <div class="ai-orb-ring"></div>
+          <div class="ai-orb-ring r2"></div>
+          <div class="ai-orb-core">AI</div>
+        </div>
+        <div class="ai-orb-label">NEURAL</div>
+      </div>
+      <!-- Ask AI Chat -->
+      <div class="ai-chat" id="aiChat" style="display:none;">
+        <div class="ai-chat-header">
+          <span style="color:var(--green);font-size:9px;font-weight:600;letter-spacing:0.1em;">ASK AI</span>
+          <button onclick="document.getElementById('aiChat').style.display='none'" style="background:none;border:none;color:var(--dim);cursor:pointer;font-family:var(--font);font-size:10px;">x</button>
+        </div>
+        <div class="ai-chat-log" id="aiChatLog"></div>
+        <div style="display:flex;gap:4px;">
+          <input class="m-input" id="aiChatInput" placeholder="Ask about the data..." style="flex:1;font-size:10px;padding:5px 6px;" onkeydown="if(event.key==='Enter')askAI()">
+          <button onclick="askAI()" style="font-family:var(--font);font-size:9px;background:var(--green);color:var(--bg);border:none;padding:4px 8px;cursor:pointer;font-weight:700;">GO</button>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="side-actions">
+        <button class="s-btn pri" onclick="openExport()" {{ 'disabled' if not has_data else '' }} title="EXPORT">
+          <span class="s-btn-icn">▤</span><span class="s-btn-txt">EXPORT</span>
+        </button>
+        <button class="s-btn" onclick="openSettings()" title="SETTINGS">
+          <span class="s-btn-icn">⚙</span><span class="s-btn-txt">SETTINGS</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== MAIN ======== -->
+  <div class="main">
+
+    <div class="head fade">
+      <div class="head-title">SYSTEM STATUS</div>
+      <div class="head-meta">
+        {% if mode == MODE_INTERNAL %}<span class="tag hi">INTERNAL_OP</span>{% else %}<span class="tag hi">PARTNER_VIEW</span>{% endif %}
+        {% if partner_name %}<span class="tag">{{ partner_name }}</span>{% endif %}
+        {% if date_range %}<span class="tag">{{ date_range }}</span>{% endif %}
+      </div>
+    </div>
+
+    {% if error %}
+    <div style="border: 1px solid var(--red); background: rgba(255,51,102,0.1); padding: 12px 16px; color: var(--red); margin-bottom: 24px; font-weight: 600; letter-spacing: 0.05em;">
+      [ERR] {{ error }}
+    </div>
+    {% endif %}
+
+    {% if not has_data %}
+    <div class="empty fade fd1">
+      <div class="empty-t">AWAITING DATA STREAM<span class="empty-cursor"></span></div>
+      <div style="font-size:11px; color:var(--dim); margin-top:12px; letter-spacing:0.1em;">INITIATE UPLOAD SEQUENCE VIA SIDEBAR</div>
+    </div>
+
+    {% else %}
+    
+
+    <!-- METRICS GRID -->
+    <div class="grid-top fade fd1">
+      {% for label, value in a.headline_metrics[:8] %}
+      <div class="m-card">
+        <div class="m-label">{{ label }}</div>
+        <div class="m-val" data-val="{{ value }}">
+          <span class="m-val-num">{{ value }}</span>
+          {% if comp.has_comparison and comp.deltas %}
+            {% set dkey = {'Total Tickets':'tickets','Escalation Rate':'escalation_rate','SLA Compliance':'sla_compliance','Median Resolution':'median_resolution','First Contact Resolution':'fcr_rate'}.get(label) %}
+            {% if dkey and comp.deltas.get(dkey) %}
+              {% set d = comp.deltas[dkey] %}
+              <span class="m-delta {% if d.direction == 'up' %}delta-up{% elif d.direction == 'down' %}delta-dn{% endif %}">
+                {{ '↑' if d.direction == 'up' else '↓' if d.direction == 'down' else '—' }}{{ d.pct }}%
+              </span>
+            {% endif %}
+          {% endif %}
+        </div>
+        <svg class="m-spark-svg" data-label="{{ label }}" width="70" height="20"></svg>
+        <div class="m-tooltip"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- TRENDS (multi-month comparison) -->
+    {% if comp.has_comparison %}
+    <div class="panel span-2 fade fd2" style="margin-bottom:12px; grid-column: 1 / -1;">
+      <div class="panel-trigger" onclick="togglePanel(this, event)">
+        <div class="panel-head">
+          <div class="p-title"><span class="dot" style="background:var(--blue);"></span>Trend Vectors</div>
+          <div class="p-meta">{{ comp.month_count }} MONTHS <span class="p-arrow">►</span></div>
+        </div>
+        <div class="panel-preview" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+          <!-- Volume -->
+          <div style="border-left: 2px solid var(--cyan); padding-left: 12px; background: rgba(0, 229, 255, 0.03); padding-top: 6px; padding-bottom: 6px;">
+            <div class="pv-lbl">VOLUME</div>
+            <div style="display:flex; align-items:baseline; gap: 8px; margin-top: 4px;">
+              <span style="font-size:16px; color:var(--text); font-weight:300;">{{ comp.trends.tickets[0] }}</span>
+              <span style="font-size:10px; color:var(--dim);">→</span>
+              <span style="font-size:16px; color:var(--cyan); font-weight:600;">{{ comp.trends.tickets[-1] }}</span>
+            </div>
+            <div style="font-size:8px; color:var(--dim); margin-top:4px;">{{ comp.trends.labels[0] }} TO {{ comp.trends.labels[-1] }}</div>
+          </div>
+          <!-- SLA -->
+          <div style="border-left: 2px solid var(--green); padding-left: 12px; background: rgba(0, 250, 154, 0.03); padding-top: 6px; padding-bottom: 6px;">
+            <div class="pv-lbl">SLA COMPLIANCE</div>
+            <div style="display:flex; align-items:baseline; gap: 8px; margin-top: 4px;">
+              <span style="font-size:16px; color:var(--text); font-weight:300;">{{ comp.trends.sla_compliance[0] }}%</span>
+              <span style="font-size:10px; color:var(--dim);">→</span>
+              <span style="font-size:16px; color:var(--green); font-weight:600;">{{ comp.trends.sla_compliance[-1] }}%</span>
+            </div>
+            <div style="font-size:8px; color:var(--dim); margin-top:4px;">{{ comp.trends.labels[0] }} TO {{ comp.trends.labels[-1] }}</div>
+          </div>
+          <!-- Escalation -->
+          <div style="border-left: 2px solid var(--amber); padding-left: 12px; background: rgba(255, 184, 0, 0.03); padding-top: 6px; padding-bottom: 6px;">
+            <div class="pv-lbl">ESCALATION RATE</div>
+            <div style="display:flex; align-items:baseline; gap: 8px; margin-top: 4px;">
+              <span style="font-size:16px; color:var(--text); font-weight:300;">{{ comp.trends.escalation_rate[0] }}%</span>
+              <span style="font-size:10px; color:var(--dim);">→</span>
+              <span style="font-size:16px; color:var(--amber); font-weight:600;">{{ comp.trends.escalation_rate[-1] }}%</span>
+            </div>
+            <div style="font-size:8px; color:var(--dim); margin-top:4px;">{{ comp.trends.labels[0] }} TO {{ comp.trends.labels[-1] }}</div>
+          </div>
+          <!-- Resolution -->
+          <div style="border-left: 2px solid var(--blue); padding-left: 12px; background: rgba(0, 102, 255, 0.03); padding-top: 6px; padding-bottom: 6px;">
+            <div class="pv-lbl">MEDIAN RES.</div>
+            <div style="display:flex; align-items:baseline; gap: 8px; margin-top: 4px;">
+              <span style="font-size:16px; color:var(--text); font-weight:300;">{{ comp.trends.median_resolution[0] }}m</span>
+              <span style="font-size:10px; color:var(--dim);">→</span>
+              <span style="font-size:16px; color:var(--blue); font-weight:600;">{{ comp.trends.median_resolution[-1] }}m</span>
+            </div>
+            <div style="font-size:8px; color:var(--dim); margin-top:4px;">{{ comp.trends.labels[0] }} TO {{ comp.trends.labels[-1] }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body-wrap">
+        <div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <script>window.TREND_DATA = {{ comp.trends | tojson }};</script>
+            <div class="c2" style="margin-bottom: 24px;">
+              <!-- 2x2 Grid of SVG Graphs -->
+              <div style="border: 1px solid var(--border); background: var(--bg); padding: 16px; position:relative;">
+                <div class="pv-lbl" style="color:var(--cyan); margin-bottom:12px;">VOLUME TREND</div>
+                <svg class="trend-chart" data-key="tickets" data-color="var(--cyan)" data-unit="" width="100%" height="140" style="display:block;"></svg>
+              </div>
+              <div style="border: 1px solid var(--border); background: var(--bg); padding: 16px; position:relative;">
+                <div class="pv-lbl" style="color:var(--green); margin-bottom:12px;">SLA COMPLIANCE</div>
+                <svg class="trend-chart" data-key="sla_compliance" data-color="var(--green)" data-unit="%" width="100%" height="140" style="display:block;"></svg>
+              </div>
+              <div style="border: 1px solid var(--border); background: var(--bg); padding: 16px; position:relative;">
+                <div class="pv-lbl" style="color:var(--amber); margin-bottom:12px;">ESCALATION RATE</div>
+                <svg class="trend-chart" data-key="escalation_rate" data-color="var(--amber)" data-unit="%" width="100%" height="140" style="display:block;"></svg>
+              </div>
+              <div style="border: 1px solid var(--border); background: var(--bg); padding: 16px; position:relative;">
+                <div class="pv-lbl" style="color:var(--blue); margin-bottom:12px;">MEDIAN RESOLUTION</div>
+                <svg class="trend-chart" data-key="median_resolution" data-color="var(--blue)" data-unit="m" width="100%" height="140" style="display:block;"></svg>
+              </div>
+            </div>
+            
+            <div class="tab-bar">
+              <button class="tab-btn on" style="cursor:default; border-bottom-color:var(--cyan);">Historical Ledger</button>
+            </div>
+            <div class="tab-panel on" data-tabs="trends">
+              <table class="tbl">
+                <tr><th>Month</th><th class="r">Tickets</th><th class="r">Esc%</th><th class="r">SLA%</th><th class="r">Med Res</th><th class="r">FCR%</th></tr>
+                {% for m in comp.months %}
+                <tr>
+                  <td><span style="color:var(--bright);">{{ m.label }}</span></td>
+                  <td class="r">{{ m.tickets }}</td>
+                  <td class="r">{{ m.escalation_rate }}%</td>
+                  <td class="r {% if m.sla >= 90 %}accent{% elif m.sla < 80 %}bad-text{% endif %}">{{ m.sla }}%</td>
+                  <td class="r">{{ m.median_res_fmt }}</td>
+                  <td class="r">{{ m.fcr }}%</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- COMMAND CENTER WIDGETS -->
+    <div class="cmd-grid fade fd2">
+
+      <!-- Executive Brief -->
+      <div class="panel span-2">
+        <div class="panel-trigger" onclick="togglePanel(this, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot"></span>Executive Summary</div>
+            <div class="p-meta">GENERATED INTEL <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div class="pv-lbl">TOP INSIGHT</div>
+            <div style="font-size: 11px; color: var(--text); border-left: 2px solid var(--cyan); padding-left: 12px; line-height: 1.5; background: rgba(255,255,255,0.02); padding: 8px 12px;">
+              {{ a.executive_brief_points[0] if a.executive_brief_points else 'AWAITING DATA...' }}
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="c2">
+              <div>
+                <div class="stat-lbl" style="text-align:left;">KEY INSIGHTS</div>
+                <ul class="lst">{% for p in a.executive_brief_points %}<li>{{ p }}</li>{% endfor %}</ul>
+              </div>
+              <div>
+                <div class="stat-lbl" style="text-align:left;">PRIORITY ACTIONS</div>
+                <ul class="lst">{% for p in a.priority_actions[:5] %}<li>{{ p }}</li>{% endfor %}</ul>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Resolution Time -->
+      <div class="panel">
+        <div class="panel-trigger" onclick="togglePanel(this, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot"></span>Resolution Vectors</div>
+            <div class="p-meta">DISTRIBUTION <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; background: var(--bg); padding: 12px; border: 1px solid var(--border);">
+              <div><div class="pv-lbl">MEDIAN</div><div class="pv-val">{{ a.resolution.median_fmt }}</div></div>
+              <div><div class="pv-lbl">P90</div><div class="pv-val" style="color:var(--cyan);">{{ a.resolution.p90_fmt }}</div></div>
+              <div><div class="pv-lbl">P95</div><div class="pv-val" style="color:var(--amber);">{{ a.resolution.p95_fmt }}</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="c3" style="margin-bottom:20px;">
+              <div class="stat-box"><div class="stat-lbl">Median</div><div class="stat-val">{{ a.resolution.median_fmt }}</div></div>
+              <div class="stat-box"><div class="stat-lbl">P90</div><div class="stat-val">{{ a.resolution.p90_fmt }}</div></div>
+              <div class="stat-box"><div class="stat-lbl">P95</div><div class="stat-val">{{ a.resolution.p95_fmt }}</div></div>
+            </div>
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'res')">By Queue</button>
+              <button class="tab-btn" onclick="switchTab(this,'res')">By Priority</button>
+              <button class="tab-btn" onclick="switchTab(this,'res')">By Issue</button>
+            </div>
+            <div class="tab-panel on" data-tabs="res">
+              {% if a.resolution.by_queue %}
+              <table class="tbl"><tr><th>Queue</th><th class="r">Vol</th><th class="r">Median</th><th class="r">P90</th></tr>
+              {% for r in a.resolution.by_queue[:6] %}<tr><td>{{ r.Queue }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r['Median (min)'] }}m</td><td class="r">{{ r['P90 (min)'] }}m</td></tr>{% endfor %}
+              </table>{% else %}<div style="color:var(--dim); padding:10px;">NO DATA</div>{% endif %}
+            </div>
+            <div class="tab-panel" data-tabs="res">
+              {% if a.resolution.by_priority %}
+              <table class="tbl"><tr><th>Priority</th><th class="r">Vol</th><th class="r">Median</th><th class="r">P90</th></tr>
+              {% for r in a.resolution.by_priority[:6] %}<tr><td>{{ r.Priority }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r['Median (min)'] }}m</td><td class="r">{{ r['P90 (min)'] }}m</td></tr>{% endfor %}
+              </table>{% else %}<div style="color:var(--dim); padding:10px;">NO DATA</div>{% endif %}
+            </div>
+            <div class="tab-panel" data-tabs="res">
+              {% if a.resolution.by_issue_type %}
+              <table class="tbl"><tr><th>Issue Type</th><th class="r">Vol</th><th class="r">Median</th><th class="r">P90</th></tr>
+              {% for r in a.resolution.by_issue_type[:6] %}<tr><td>{{ r['Issue Type'][:20] }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r['Median (min)'] }}m</td><td class="r">{{ r['P90 (min)'] }}m</td></tr>{% endfor %}
+              </table>{% else %}<div style="color:var(--dim); padding:10px;">NO DATA</div>{% endif %}
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- SLA Compliance -->
+      <div class="panel">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot"></span>SLA Integrity</div>
+            <div class="p-meta">AGREEMENTS <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div class="pv-metric">
+              <div class="pv-lbl">OVERALL COMPLIANCE</div>
+              <div class="pv-val" style="color:{% if a.sla.overall >= 90 %}var(--green){% elif a.sla.overall >= 75 %}var(--amber){% else %}var(--red){% endif %};">{{ a.sla.overall }}%</div>
+            </div>
+            <div class="pv-bar-wrap">
+              <div class="pv-bar" style="width: {{ a.sla.overall }}%; background: {% if a.sla.overall >= 90 %}var(--green){% elif a.sla.overall >= 75 %}var(--amber){% else %}var(--red){% endif %};"></div>
+            </div>
+            {% if a.sla.breach_count > 0 %}
+            <div style="font-size: 9px; color: var(--red); font-weight: 700; margin-top: 8px; letter-spacing: 0.1em; background: rgba(255,51,102,0.1); padding: 4px 8px; border-left: 2px solid var(--red);">
+              ⚠ {{ a.sla.breach_count }} TARGET BREACHES DETECTED
+            </div>
+            {% else %}
+            <div style="font-size: 9px; color: var(--green); font-weight: 700; margin-top: 8px; letter-spacing: 0.1em; background: rgba(0,250,154,0.1); padding: 4px 8px; border-left: 2px solid var(--green);">
+              ✓ ALL SLA TARGETS MET
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'sla')">Priority Metrics</button>
+              <button class="tab-btn" onclick="switchTab(this,'sla')">Breach Log ({{ a.sla.breach_count }})</button>
+            </div>
+            <div class="tab-panel on" data-tabs="sla">
+              {% if a.sla.by_priority %}
+              <table class="tbl">
+                <tr><th>Priority</th><th class="r">Vol</th><th class="r">Target</th><th class="r">Compliance</th></tr>
+                {% for r in a.sla.by_priority %}
+                <tr>
+                  <td>{{ r.Priority }}</td><td class="r">{{ r.Tickets }}</td><td class="r">{{ r['Target (min)'] }}m</td>
+                  <td class="r {% if r.Compliance >= 95 %}accent{% elif r.Compliance < 80 %}bad-text{% endif %}">{{ r.Compliance }}%</td>
+                </tr>
+                {% endfor %}
+              </table>
+              {% else %}<div style="color:var(--dim); padding:10px;">NO SLA DATA</div>{% endif %}
+            </div>
+            <div class="tab-panel" data-tabs="sla">
+              {% if a.sla.breach_count > 0 %}
+              <table class="tbl"><tr><th>Ticket ID</th><th>Priority</th><th class="r">Res Time</th><th class="r">Target</th></tr>
+              {% for r in a.sla.breaching[:6] %}
+              <tr><td>{{ r.get('Ticket Number','—') }}</td><td>{{ r.Priority }}</td><td class="r bad-text">{{ r['Resolution Minutes']|round|int }}m</td><td class="r">{{ r['SLA Target (min)']|round|int }}m</td></tr>
+              {% endfor %}
+              </table>
+              {% else %}<div style="color:var(--green); font-weight:700; padding:10px; border:1px solid rgba(0,250,154,0.2); background:rgba(0,250,154,0.05); text-align:center;">ZERO BREACHES DETECTED</div>{% endif %}
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Queue & Escalation -->
+      <div class="panel">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot"></span>Distribution & Esc.</div>
+            <div class="p-meta">ROUTING <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div class="pv-lbl">TOP QUEUE VOLUME</div>
+            <div class="pv-bar-wrap" style="height: 12px; margin: 8px 0; border: 1px solid var(--border);">
+              {% for r in a.queue_table[:3] %}
+                <div class="pv-bar" style="width: {{ r.Share }}%; background: {% if loop.index==1 %}var(--cyan){% elif loop.index==2 %}var(--blue){% else %}var(--dim){% endif %}; border-right: 1px solid var(--bg);"></div>
+              {% endfor %}
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size: 9px; color: var(--dim); text-transform: uppercase;">
+              {% for r in a.queue_table[:2] %}
+                <span><span style="color:var(--bright)">{{ r.Queue[:15] }}</span> ({{ r.Share }}%)</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'qe')">Queues</button>
+              <button class="tab-btn" onclick="switchTab(this,'qe')">Esc. Reasons</button>
+              <button class="tab-btn" onclick="switchTab(this,'qe')">Sources</button>
+            </div>
+            <div class="tab-panel on" data-tabs="qe">
+              <div class="bars">
+                {% for r in a.queue_table[:6] %}
+                <div class="bar-r"><div class="bar-l">{{ r.Queue[:22] }}</div><div class="bar-t"><div class="bar-f" style="width:{{ r.Share }}%; background:var(--cyan);"></div></div><div class="bar-v">{{ r.Tickets }}</div></div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="tab-panel" data-tabs="qe">
+              <div class="bars">
+                {% for r in a.escalation_table[:6] %}
+                <div class="bar-r"><div class="bar-l">{{ r['Escalation Reason'][:22] }}</div><div class="bar-t"><div class="bar-f" style="width:{{ r.Share }}%; background:var(--amber);"></div></div><div class="bar-v">{{ r.Tickets }}</div></div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="tab-panel" data-tabs="qe">
+              {% if a.source_table %}
+              <div class="bars">
+                {% for r in a.source_table[:6] %}
+                <div class="bar-r"><div class="bar-l">{{ r.Source[:18] }}</div><div class="bar-t"><div class="bar-f" style="width:{{ r.Share }}%; background:var(--cyan);"></div></div><div class="bar-v">{{ r.Tickets }}</div></div>
+                {% endfor %}
+              </div>{% else %}<div style="color:var(--dim); padding:10px;">NO DATA</div>{% endif %}
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="panel">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot warn"></span>Anomaly Detection</div>
+            <div class="p-meta" style="color:var(--amber);">RISK FACTORS <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div style="border: 1px solid var(--amber-dim); background: rgba(255,184,0,0.05); padding: 12px; position:relative; overflow:hidden;">
+                <div class="pv-lbl" style="color:var(--amber);">AFTER-HRS VOL</div>
+                <div class="pv-val" style="color:var(--amber);">{{ a.after_hours.total }} <span class="pv-val-sub" style="color:var(--amber);">{{ a.after_hours.rate }}%</span></div>
+                <div style="position:absolute; bottom:0; left:0; height:2px; width:{{ a.after_hours.rate }}%; background:var(--amber);"></div>
+              </div>
+              <div style="border: 1px solid var(--red); background: rgba(255,51,102,0.05); padding: 12px; position:relative; overflow:hidden;">
+                <div class="pv-lbl" style="color:var(--red);">HOT ACCOUNTS</div>
+                <div class="pv-val" style="color:var(--red);">{{ a.danger_zone_companies|length }}</div>
+                <div style="position:absolute; bottom:0; left:0; height:2px; width:100%; background:var(--red);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'dz')">Hot Accounts</button>
+              <button class="tab-btn" onclick="switchTab(this,'dz')">Repeat Contacts</button>
+              <button class="tab-btn" onclick="switchTab(this,'dz')">After Hours</button>
+            </div>
+            <div class="tab-panel on" data-tabs="dz">
+              {% if a.danger_zone_companies %}
+              <table class="tbl"><tr><th>Company</th><th class="r">Vol</th><th class="r">Esc</th><th class="r">Esc%</th></tr>
+              {% for r in a.danger_zone_companies[:6] %}
+              <tr><td>{{ r.Company[:26] }}</td><td class="r">{{ r.Tickets }}</td><td class="r">{{ r.Escalated }}</td>
+              <td class="r {% if r['Escalation Rate'] >= 80 %}bad-text{% elif r['Escalation Rate'] >= 50 %}warn-text{% endif %}">{{ r['Escalation Rate'] }}%</td></tr>
+              {% endfor %}
+              </table>
+              {% else %}<div style="color:var(--dim); padding:10px;">NO ANOMALIES DETECTED</div>{% endif %}
+            </div>
+            <div class="tab-panel" data-tabs="dz">
+              {% if a.repeat_contacts %}
+              <table class="tbl"><tr><th>Contact</th><th class="r">Vol</th><th>Companies</th></tr>
+              {% for r in a.repeat_contacts[:6] %}<tr><td>{{ r.Contact[:22] }}</td><td class="r warn-text">{{ r.Tickets }}</td><td style="font-size:9px;color:var(--dim);">{{ r.Companies[:20] }}</td></tr>{% endfor %}
+              </table>
+              {% else %}<div style="color:var(--dim); padding:10px;">NO REPEAT OFFENDERS</div>{% endif %}
+            </div>
+            <div class="tab-panel" data-tabs="dz">
+              <div class="c2" style="margin-bottom:16px;">
+                <div class="stat-box" style="border-color:var(--amber-dim);"><div class="stat-lbl">After-Hrs Vol</div><div class="stat-val" style="color:var(--amber);">{{ a.after_hours.total }}</div></div>
+                <div class="stat-box"><div class="stat-lbl">Overall Rate</div><div class="stat-val">{{ a.after_hours.rate }}%</div></div>
+              </div>
+              {% if a.after_hours.by_day %}
+              <div class="bars">
+                {% set max_day = namespace(v=1) %}{% for d in a.after_hours.by_day %}{% if d.Tickets > max_day.v %}{% set max_day.v = d.Tickets %}{% endif %}{% endfor %}
+                {% for d in a.after_hours.by_day %}
+                <div class="bar-r"><div class="bar-l">{{ d.Day[:3] }}</div><div class="bar-t"><div class="bar-f" style="width:{{ (d.Tickets / max_day.v * 100)|round }}%; background:var(--amber);"></div></div><div class="bar-v">{{ d.Tickets }}</div></div>
+                {% endfor %}
+              </div>{% endif %}
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Coverage -->
+      <div class="panel span-2">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot"></span>Coverage Profile</div>
+            <div class="p-meta">SYSTEM SCOPE <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+              <div class="pv-lbl">PRIMARY ACCOUNTS</div>
+              {% for r in a.company_table[:2] %}
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px;">
+                <span style="color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80%;">{{ r.Company }}</span>
+                <span style="color:var(--cyan); font-weight:700; margin-left:12px;">{{ r.Share }}%</span>
+              </div>
+              <div class="pv-bar-wrap" style="height:2px; margin-top:4px;">
+                <div class="pv-bar" style="width: {{ r.Share }}%; background: var(--cyan);"></div>
+              </div>
+              {% endfor %}
+            </div>
+            <div>
+              <div class="pv-lbl">TOP ISSUE TYPES</div>
+              {% for r in a.issue_type_table[:2] %}
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px;">
+                <span style="color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80%;">{{ r['Issue Type'] }}</span>
+                <span style="color:var(--amber); font-weight:700; margin-left:12px;">{{ r.Share }}%</span>
+              </div>
+              <div class="pv-bar-wrap" style="height:2px; margin-top:4px;">
+                <div class="pv-bar" style="width: {{ r.Share }}%; background: var(--amber);"></div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'cov')">Accounts</button>
+              <button class="tab-btn" onclick="switchTab(this,'cov')">Issue Types</button>
+              <button class="tab-btn" onclick="switchTab(this,'cov')">Sub-Issue Types</button>
+            </div>
+            <div class="tab-panel on" data-tabs="cov">
+              <table class="tbl"><tr><th>Company</th><th class="r">Vol</th><th class="r">Share</th></tr>
+              {% for r in a.company_table[:10] %}<tr><td>{{ r.Company[:32] }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r.Share }}%</td></tr>{% endfor %}
+              </table>
+            </div>
+            <div class="tab-panel" data-tabs="cov">
+              <table class="tbl"><tr><th>Type</th><th class="r">Vol</th><th class="r">Share</th></tr>
+              {% for r in a.issue_type_table[:10] %}<tr><td>{{ r['Issue Type'][:28] }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r.Share }}%</td></tr>{% endfor %}
+              </table>
+            </div>
+            <div class="tab-panel" data-tabs="cov">
+              {% if a.sub_issue_type_table %}
+              <table class="tbl"><tr><th>Sub-Type</th><th class="r">Vol</th><th class="r">Share</th></tr>
+              {% for r in a.sub_issue_type_table[:10] %}<tr><td>{{ r['Sub-Issue Type'][:28] }}</td><td class="r">{{ r.Tickets }}</td><td class="r accent">{{ r.Share }}%</td></tr>{% endfor %}
+              </table>{% else %}<div style="color:var(--dim); padding:10px;">NO SUB-ISSUE DATA</div>{% endif %}
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Technicians (Internal) -->
+      {% if mode == MODE_INTERNAL %}
+      <div class="panel span-2">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot bad"></span>Technician Telemetry</div>
+            <div class="p-meta" style="color:var(--red);">INTERNAL ONLY <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+             <div class="pv-metric">
+                <div class="pv-lbl">GLOBAL FCR RATE</div>
+                <div class="pv-val" style="color:var(--cyan); font-size:24px;">{{ a.fcr_rate }}%</div>
+             </div>
+             {% if a.noise.total > 0 %}
+             <div style="margin-top: 8px; font-size: 9px; color: var(--dim); border-top: 1px dashed var(--border-hi); padding-top: 8px; display: flex; justify-content: space-between;">
+               <span>NOISE DETECTED: <span style="color:var(--bright)">{{ a.noise.total }}</span> EVENTS ({{ a.noise.rate }}%)</span>
+               <span>SPAM: {{ a.noise.spam }} | SYNC: {{ a.noise.sync }}</span>
+             </div>
+             {% endif %}
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="c2">
+              <div>
+                {% if a.technician_scorecards %}
+                <table class="tbl">
+                  <tr><th>Operator</th><th class="r">Vol</th><th class="r">Avg Res</th><th class="r">Esc%</th><th class="r">FCR%</th></tr>
+                  {% for r in a.technician_scorecards[:8] %}
+                  <tr>
+                    <td>{{ r.Technician[:20] }}</td><td class="r">{{ r.Tickets }}</td><td class="r">{{ r['Avg Resolution (min)'] }}m</td>
+                    <td class="r {% if r['Escalation Rate'] > 60 %}bad-text{% elif r['Escalation Rate'] > 40 %}warn-text{% endif %}">{{ r['Escalation Rate'] }}%</td>
+                    <td class="r accent">{{ r.get('FCR Rate', '—') }}%</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+                {% endif %}
+              </div>
+              <div>
+                 <div class="stat-box" style="margin-bottom:16px;">
+                   <div class="stat-lbl">Global FCR Rate</div>
+                   <div class="stat-val" style="color:var(--cyan); font-size: 32px;">{{ a.fcr_rate }}%</div>
+                 </div>
+                 {% if a.noise.total > 0 %}
+                 <div style="border: 1px dashed var(--border-hi); padding: 16px; background: rgba(255,255,255,0.02);">
+                   <div class="stat-lbl">System Noise Detected</div>
+                   <div style="font-size:18px; font-weight:300; color:var(--text); margin-bottom:8px;">{{ a.noise.total }} events ({{ a.noise.rate }}%)</div>
+                   <div style="display:flex; gap:16px; font-size:10px; color:var(--dim);">
+                      <div>SPAM: <span style="color:var(--bright)">{{ a.noise.spam }}</span></div>
+                      <div>SYNC: <span style="color:var(--bright)">{{ a.noise.sync }}</span></div>
+                   </div>
+                 </div>
+                 {% endif %}
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <!-- P8: Advanced Analytics (Internal) -->
+      {% if a.get('analytics') %}
+      <div class="panel span-2">
+        <div class="panel-trigger" onclick="togglePanel(this.parentElement, event)">
+          <div class="panel-head">
+            <div class="p-title"><span class="dot" style="background:var(--green);"></span>Advanced Analytics</div>
+            <div class="p-meta" style="color:var(--green);">P8 ENGINE <span class="p-arrow">►</span></div>
+          </div>
+          <div class="panel-preview">
+            <div class="pv-metric">
+              <div class="pv-lbl">COMPLEXITY INDEX</div>
+              <div class="pv-val" style="color:var(--cyan); font-size:20px;">{{ a.analytics.complexity_summary.mean }} avg &middot; {{ a.analytics.complexity_summary.high_count }} high</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body-wrap"><div class="panel-body">
+          <div class="ascii-loader"></div>
+          <div class="panel-content">
+            <div class="tab-bar">
+              <button class="tab-btn on" onclick="switchTab(this,'p8')">Complexity</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">Keywords</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">Workload</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">Peak Load</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">KB Coverage</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">Patterns</button>
+              <button class="tab-btn" onclick="switchTab(this,'p8')">Escalation</button>
+            </div>
+
+            <!-- Complexity -->
+            <div class="tab-panel on" data-tabs="p8">
+              <div class="c2">
+                <div>
+                  <div class="stat-box">
+                    <div class="stat-lbl">Mean Complexity</div>
+                    <div class="stat-val" style="font-size:28px;">{{ a.analytics.complexity_summary.mean }}</div>
+                  </div>
+                  <div style="display:flex;gap:12px;margin-top:8px;">
+                    <div class="stat-box" style="flex:1;"><div class="stat-lbl">High (4+)</div><div class="stat-val" style="color:var(--red);">{{ a.analytics.complexity_summary.high_count }}</div></div>
+                    <div class="stat-box" style="flex:1;"><div class="stat-lbl">Low (1-2)</div><div class="stat-val" style="color:var(--green);">{{ a.analytics.complexity_summary.low_count }}</div></div>
+                  </div>
+                </div>
+                <div>
+                  <table class="tbl"><tr><th>Ticket</th><th>Queue</th><th class="r">Score</th></tr>
+                  {% for r in a.analytics.complexity_top[:8] %}<tr><td>{{ r.get('Ticket Number','') }}</td><td>{{ r.get('Queue','')[:18] }}</td><td class="r {% if r.Complexity >= 4 %}bad-text{% endif %}">{{ r.Complexity }}</td></tr>{% endfor %}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Keywords -->
+            <div class="tab-panel" data-tabs="p8">
+              <div class="c2">
+                <div>
+                  <div class="sub-label">Category Distribution</div>
+                  <div class="bars">
+                    {% set max_kw = namespace(v=1) %}{% for r in a.analytics.keyword_categories %}{% if r.Tickets > max_kw.v %}{% set max_kw.v = r.Tickets %}{% endif %}{% endfor %}
+                    {% for r in a.analytics.keyword_categories %}
+                    <div class="bar-r"><div class="bar-l">{{ r.Category[:16] }}</div><div class="bar-t"><div class="bar-f" style="width:{{ (r.Tickets / max_kw.v * 100)|round }}%"></div></div><div class="bar-v">{{ r.Tickets }}</div></div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div>
+                  <div class="sub-label">Category x Escalation Rate</div>
+                  <table class="tbl"><tr><th>Category</th><th class="r">Tix</th><th class="r">Esc%</th></tr>
+                  {% for r in a.analytics.keyword_escalation %}<tr><td>{{ r.Category[:16] }}</td><td class="r">{{ r.Tickets }}</td><td class="r {% if r['Esc Rate'] > 50 %}bad-text{% elif r['Esc Rate'] > 30 %}warn-text{% endif %}">{{ r['Esc Rate'] }}%</td></tr>{% endfor %}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workload -->
+            <div class="tab-panel" data-tabs="p8">
+              <table class="tbl"><tr><th>Technician</th><th class="r">Tickets</th><th class="r">Deviation</th><th>Status</th></tr>
+              {% for r in a.analytics.workload_balance[:12] %}
+              <tr><td>{{ r.Technician[:20] }}</td><td class="r">{{ r.Tickets }}</td><td class="r">{{ r.Deviation }}</td>
+              <td style="color:{% if r.Status == 'Overloaded' %}var(--red){% elif r.Status == 'Underutilized' %}var(--amber){% else %}var(--dim){% endif %};">{{ r.Status }}</td></tr>
+              {% endfor %}
+              </table>
+            </div>
+
+            <!-- Peak Load Heatmap -->
+            <div class="tab-panel" data-tabs="p8">
+              <div style="font-size:10px;color:var(--dim);margin-bottom:8px;">Peak: {{ a.analytics.peak_heatmap.peak_day }} {{ a.analytics.peak_heatmap.peak_hour }}:00 ({{ a.analytics.peak_heatmap.peak_count }} tickets)</div>
+              <div style="overflow-x:auto;">
+                <table class="tbl" style="font-size:9px;">
+                  <tr><th></th>{% for h in range(24) %}<th class="r" style="padding:2px 3px;">{{ h }}</th>{% endfor %}</tr>
+                  {% for d in range(7) %}
+                  <tr><td style="font-weight:600;">{{ a.analytics.peak_heatmap.days[d] }}</td>
+                  {% for h in range(24) %}
+                  {% set val = a.analytics.peak_heatmap.grid[d][h] %}
+                  {% set intensity = (val / a.analytics.peak_heatmap.max_val * 100)|round|int if a.analytics.peak_heatmap.max_val > 0 else 0 %}
+                  <td class="r" style="padding:2px 3px; background:rgba(0,212,255,{{ intensity / 100 * 0.4 }});">{{ val if val > 0 else '' }}</td>
+                  {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </table>
+              </div>
+            </div>
+
+            <!-- KB Coverage -->
+            <div class="tab-panel" data-tabs="p8">
+              <table class="tbl"><tr><th>Issue Type</th><th class="r">Total</th><th class="r">KB Linked</th><th class="r">Coverage</th></tr>
+              {% for r in a.analytics.kb_coverage %}
+              <tr><td>{{ r['Issue Type'] }}</td><td class="r">{{ r.Total }}</td><td class="r">{{ r.Linked }}</td>
+              <td class="r {% if r.Coverage >= 80 %}accent{% elif r.Coverage < 30 %}bad-text{% endif %}">{{ r.Coverage }}%</td></tr>
+              {% endfor %}
+              </table>
+            </div>
+
+            <!-- Company Patterns -->
+            <div class="tab-panel" data-tabs="p8">
+              <div class="sub-label">Recurring Issue Patterns (3+ tickets same category)</div>
+              {% if a.analytics.company_patterns %}
+              <table class="tbl"><tr><th>Company</th><th>Category</th><th class="r">Tickets</th></tr>
+              {% for r in a.analytics.company_patterns %}<tr><td>{{ r.Company[:26] }}</td><td>{{ r.Category }}</td><td class="r warn-text">{{ r.Tickets }}</td></tr>{% endfor %}
+              </table>
+              {% else %}<div style="color:var(--dim);">No recurring patterns detected.</div>{% endif %}
+            </div>
+
+            <!-- Escalation Timing -->
+            <div class="tab-panel" data-tabs="p8">
+              <div class="c2">
+                <div>
+                  <div class="sub-label">Time-to-Escalation</div>
+                  <table class="tbl"><tr><th>Timing</th><th class="r">Count</th><th class="r">Share</th></tr>
+                  {% for r in a.analytics.escalation_timing %}<tr><td>{{ r.Timing }}</td><td class="r">{{ r.Count }}</td><td class="r">{{ r.Share }}%</td></tr>{% endfor %}
+                  </table>
+                </div>
+                <div>
+                  <div class="sub-label">Description Complexity</div>
+                  <table class="tbl"><tr><th>Level</th><th class="r">Count</th><th class="r">Share</th></tr>
+                  {% for r in a.analytics.description_complexity %}<tr><td>{{ r.Complexity }}</td><td class="r">{{ r.Count }}</td><td class="r">{{ r.Share }}%</td></tr>{% endfor %}
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+    </div><!-- end cmd-grid -->
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+{% if ai_enabled and mode == MODE_INTERNAL %}
+<!-- AI ASSISTANT VIEW -->
+<div class="ai-view" id="aiView">
+  <div class="ai-header">
+    <div class="ai-title"><span class="ai-dot"></span>AI ANALYSIS ENGINE</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      {% if ai.has_ai %}
+      <span class="ai-meta">{{ ai.calls_made }} CALLS &middot; {{ ai.tokens_used }} TOKENS</span>
+      {% endif %}
+      <button class="ai-close" onclick="toggleAIView()">ESC</button>
+    </div>
+  </div>
+
+  {% if not ai.has_ai %}
+  <!-- No results yet — show run button -->
+  <button class="ai-run-btn" id="aiRunBtn" onclick="runAI()">
+    ◆ INITIATE AI ANALYSIS
+  </button>
+  <div class="ai-status" id="aiStatus">
+    {{ settings.get('ai', {}).get('deployment', 'gpt-5.4') }} ({{ settings.get('ai', {}).get('reasoning_effort', 'high') }}) &middot; Sentiment, frustration analysis, data hygiene, talking points, and summary.
+  </div>
+  <div id="aiTraceLog" style="display:none;max-height:200px;overflow-y:auto;border:1px solid var(--border);padding:8px;margin-top:8px;font-family:var(--font);background:var(--bg);"></div>
+  {% else %}
+  <!-- Results loaded -->
+  {% if ai.errors %}
+  <div style="border:1px solid var(--red);padding:8px 12px;color:var(--red);font-size:10px;margin-bottom:12px;">
+    {% for e in ai.errors %}{{ e }}<br>{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="ai-status">
+    {{ ai.calls_made }} API calls &middot; {{ ai.tokens_used }} tokens &middot; <button class="ai-close" onclick="clearAI()" style="display:inline;padding:2px 6px;font-size:8px;">CLEAR RESULTS</button>
+  </div>
+
+  <div class="ai-grid">
+    <!-- Executive Summary -->
+    {% if ai.executive_summary %}
+    <div class="ai-widget span-2">
+      <div class="ai-widget-title">Executive Summary{% if settings.get('ai', {}).get('custom_instructions') %} <span class="ai-tag">Custom</span>{% endif %}</div>
+      <div style="font-size:11px;line-height:1.7;color:var(--text);">{{ ai.executive_summary }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Governance Talking Points -->
+    {% if ai.talking_points %}
+    <div class="ai-widget span-2">
+      <div class="ai-widget-title">Governance Talking Points</div>
+      <ul class="lst">{% for tp in ai.talking_points %}<li>{{ tp }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <!-- Frustration Hotspots -->
+    {% if ai.frustration_hotspots %}
+    <div class="ai-widget">
+      <div class="ai-widget-title">Frustration Hotspots <span class="ai-tag">{{ ai.frustration_hotspots|length }} companies</span></div>
+      {% if ai.sentiment_summary %}
+      <div style="display:flex;gap:12px;margin-bottom:8px;">
+        <div><div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;">Mean Score</div><div style="font-size:22px;font-weight:700;color:var(--bright);">{{ ai.sentiment_summary.mean }}</div></div>
+        <div><div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;">Frustrated</div><div style="font-size:22px;font-weight:700;color:var(--red);">{{ ai.sentiment_summary.low_count }}</div></div>
+        <div><div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;">Satisfied</div><div style="font-size:22px;font-weight:700;color:var(--green);">{{ ai.sentiment_summary.high_count }}</div></div>
+      </div>
+      {% endif %}
+      <table class="tbl"><tr><th>Company</th><th class="r">Avg</th><th class="r">Tickets</th><th class="r">Score</th></tr>
+      {% for h in ai.frustration_hotspots[:10] %}
+      <tr style="cursor:pointer;" onclick="toggleAiDetail(this)">
+        <td>{{ h.company[:24] }}</td>
+        <td class="r bad-text">{{ h.avg_sentiment }}</td>
+        <td class="r">{{ h.ticket_count }}</td>
+        <td class="r" style="color:var(--amber);">{{ h.frustration_score }}</td>
+      </tr>
+      <tr style="display:none;"><td colspan="4" style="padding:4px 8px;font-size:9px;color:var(--dim);border-top:none;">
+        {% for t in h.sample_titles %}<div>- {{ t[:60] }}</div>{% endfor %}
+      </td></tr>
+      {% endfor %}
+      </table>
+      {% if ai.frustration_by_type %}
+      <div style="margin-top:10px;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;">By Issue Type</div>
+      <table class="tbl" style="margin-top:4px;"><tr><th>Type</th><th class="r">Avg</th><th class="r">Count</th></tr>
+      {% for ft in ai.frustration_by_type[:6] %}
+      <tr><td>{{ ft.issue_type[:20] }}</td><td class="r {% if ft.avg_sentiment <= 2.5 %}bad-text{% endif %}">{{ ft.avg_sentiment }}</td><td class="r">{{ ft.ticket_count }}</td></tr>
+      {% endfor %}
+      </table>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Data Hygiene Report -->
+    {% if ai.hygiene_report and ai.hygiene_report.get('total_unknown', 0) > 0 %}
+    <div class="ai-widget">
+      <div class="ai-widget-title">Data Hygiene Report <span class="ai-tag">{{ ai.hygiene_report.total_unknown }} uncategorized</span></div>
+      <div style="font-size:11px;color:var(--amber);margin-bottom:8px;">
+        {{ ai.hygiene_report.total_unknown }} tickets with Unknown/Other category
+      </div>
+      {% for g in ai.hygiene_report.get('groups', [])[:8] %}
+      <div style="cursor:pointer;padding:6px 8px;border:1px solid var(--border);margin-bottom:4px;font-size:10px;display:flex;justify-content:space-between;align-items:center;" onclick="toggleAiDetail(this)">
+        <span style="color:var(--bright);">{{ g.category }}</span>
+        <span style="color:var(--dim);">{{ g.count }} tickets &#9654;</span>
+      </div>
+      <div style="display:none;padding:4px 8px 8px;border:1px solid var(--border);border-top:none;margin-bottom:4px;margin-top:-4px;">
+        <table class="tbl" style="margin:0;"><tr><th>Ticket</th><th>Company</th><th>Sub-Type</th><th class="r">Conf</th></tr>
+        {% for t in g.tickets[:6] %}
+        <tr><td style="font-size:9px;">{{ t.ticket_id[:14] }}</td><td style="font-size:9px;">{{ t.company[:16] }}</td><td style="font-size:9px;">{{ t.suggested_sub[:16] }}</td><td class="r accent" style="font-size:9px;">{{ (t.confidence * 100)|round|int }}%</td></tr>
+        {% endfor %}
+        {% if g.tickets|length > 6 %}<tr><td colspan="4" style="font-size:8px;color:var(--dim);">+ {{ g.tickets|length - 6 }} more</td></tr>{% endif %}
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Anomaly Narratives -->
+    {% if ai.anomaly_narratives %}
+    <div class="ai-widget">
+      <div class="ai-widget-title">Anomaly Explanations</div>
+      <ul class="lst">
+      {% for n in ai.anomaly_narratives %}<li>{{ n }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-t">EXPORT REPORT</div>
+    <div class="modal-s">METADATA</div>
+    <div class="modal-row">
+      <div style="flex:1"><div class="m-input-lbl">TITLE</div><input class="m-input" id="exTitle" value="{{ report_title }}"></div>
+      <div style="flex:1"><div class="m-input-lbl">FILENAME</div><input class="m-input" id="exFile" value="{{ output_filename }}"></div>
+    </div>
+    {% if ai.has_ai %}
+    <label class="modal-check" style="margin:8px 0;"><input type="checkbox" id="exIncludeAI" checked> Include AI Insights in PDF export</label>
+    {% endif %}
+    <div class="modal-s" style="margin-top:12px;">FORMAT</div>
+    <div class="export-opts">
+      <div class="ex-card" onclick="doExport('wb')">
+        <div class="ex-icon">▤</div>
+        <div class="ex-title">WORKBOOK</div>
+        <div class="ex-desc">Excel with all sheets</div>
+      </div>
+      <div class="ex-card" onclick="doExport('both')">
+        <div class="ex-icon">▤ + ◻</div>
+        <div class="ex-title">WORKBOOK + PDF</div>
+        <div class="ex-desc">Excel + Executive PDF snapshot</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="s-btn" onclick="closeModal('exportModal')">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-t">SYSTEM CONFIGURATION</div>
+        <div class="modal-s">ENVIRONMENT MODE</div>
+    <div class="mode-row" style="margin-bottom: 24px;">
+      <button class="mode-btn {{ 'on' if mode == MODE_CUSTOMER else '' }}" onclick="setMode('{{ MODE_CUSTOMER }}')">PARTNER / CUSTOMER VIEW</button>
+      <button class="mode-btn {{ 'on' if mode == MODE_INTERNAL else '' }}" onclick="setMode('{{ MODE_INTERNAL }}')">INTERNAL OPERATOR</button>
+    </div>
+    
+    <div class="modal-s">SLA TARGETS (MINUTES)</div>
+    <div class="modal-row" style="flex-wrap:wrap;">
+      {% for p in ['Critical','High','Medium','Low','None'] %}
+      <div style="flex: 1 0 30%;"><div class="m-input-lbl">{{ p|upper }}</div><input class="m-input sla-in" data-p="{{ p }}" type="number" value="{{ settings.sla_targets.get(p, 1440) }}"></div>
+      {% endfor %}
+    </div>
+    <div class="modal-s" style="margin-top:24px;">FILTER PROTOCOLS</div>
+    <label class="modal-check"><input type="checkbox" id="chkSpam" {{ 'checked' if settings.noise_filter.get('hide_spam', True) }}> Mute Spam Tokens</label>
+    <label class="modal-check"><input type="checkbox" id="chkSync" {{ 'checked' if settings.noise_filter.get('hide_sync_errors', True) }}> Mute Sync Anomalies</label>
+    
+    <div class="modal-s" style="margin-top:24px;">AI ENGINE</div>
+    <label class="modal-check"><input type="checkbox" id="chkAiEnabled" {{ 'checked' if settings.get('ai', {}).get('enabled', False) }}> Enable AI Analysis</label>
+    <div class="modal-row" style="margin-top:6px;">
+      <div style="flex:1">
+        <div class="m-input-lbl">PROVIDER</div>
+        <select class="m-input" id="aiProvider" onchange="syncAiProviderUi()">
+          <option value="chatgpt_oauth" {{ 'selected' if settings.get('ai', {}).get('provider') == 'chatgpt_oauth' else '' }}>ChatGPT Login (OAuth)</option>
+          <option value="openai" {{ 'selected' if settings.get('ai', {}).get('provider') == 'openai' else '' }}>OpenAI API Key</option>
+          <option value="azure_openai" {{ 'selected' if settings.get('ai', {}).get('provider', 'azure_openai') == 'azure_openai' and settings.get('ai', {}).get('provider') != 'chatgpt_oauth' and settings.get('ai', {}).get('provider') != 'openai' else '' }}>Azure OpenAI</option>
+        </select>
+      </div>
+      <div style="flex:1"><div class="m-input-lbl" id="aiModelLabel">MODEL / DEPLOYMENT</div><input class="m-input" id="aiDeployment" value="{{ settings.get('ai', {}).get('deployment', 'gpt-5.4') }}"></div>
+      <div style="flex:0 0 100px;">
+        <div class="m-input-lbl">REASONING</div>
+        <select class="m-input" id="aiReasoning">
+          {% set current_effort = settings.get('ai', {}).get('reasoning_effort', 'high') %}
+          <option value="none" {{ 'selected' if current_effort == 'none' else '' }}>none</option>
+          <option value="low" {{ 'selected' if current_effort == 'low' else '' }}>low</option>
+          <option value="medium" {{ 'selected' if current_effort == 'medium' else '' }}>medium</option>
+          <option value="high" {{ 'selected' if current_effort == 'high' else '' }}>high</option>
+          <option value="xhigh" {{ 'selected' if current_effort == 'xhigh' else '' }}>xhigh</option>
+        </select>
+      </div>
+    </div>
+    <div class="ai-chatgpt-only" style="margin-top:6px;display:none;">
+      <div style="font-size:9px;color:var(--dim);margin-bottom:6px;letter-spacing:0.05em;">Sign in with your ChatGPT Plus/Pro account. No API key needed.</div>
+      {% if settings.get('ai', {}).get('chatgpt_connected') %}
+      <div style="font-size:9px;color:var(--green);margin-bottom:4px;">&#10003; CONNECTED</div>
+      {% endif %}
+      <button class="s-btn" onclick="connectChatGPT()" style="width:100%;border-color:var(--green);color:var(--green);font-size:9px;padding:6px;">
+        {{ 'RECONNECT CHATGPT' if settings.get('ai', {}).get('chatgpt_connected') else 'CONNECT WITH CHATGPT' }}
+      </button>
+    </div>
+    <div class="modal-row ai-azure-only" style="margin-top:4px;">
+      <div style="flex:2"><div class="m-input-lbl">AZURE ENDPOINT</div><input class="m-input" id="aiEndpoint" value="{{ settings.get('ai', {}).get('endpoint', '') }}" placeholder="https://your-org.openai.azure.com/"></div>
+      <div style="flex:1"><div class="m-input-lbl">API VERSION</div><input class="m-input" id="aiApiVersion" value="{{ settings.get('ai', {}).get('api_version', '2026-02-01') }}"></div>
+    </div>
+    <div class="modal-row ai-openai-only" style="margin-top:4px;">
+      <div style="flex:2"><div class="m-input-lbl">BASE URL (OPTIONAL)</div><input class="m-input" id="aiBaseUrl" value="{{ settings.get('ai', {}).get('base_url', '') }}" placeholder="https://api.openai.com/v1"></div>
+      <div style="flex:1"><div class="m-input-lbl">PROJECT (OPTIONAL)</div><input class="m-input" id="aiProject" value="{{ settings.get('ai', {}).get('project', '') }}" placeholder="proj_..."></div>
+    </div>
+    <div class="modal-row ai-openai-only" style="margin-top:4px;">
+      <div style="flex:1"><div class="m-input-lbl">ORGANIZATION (OPTIONAL)</div><input class="m-input" id="aiOrganization" value="{{ settings.get('ai', {}).get('organization', '') }}" placeholder="org_..."></div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="modal-row" style="margin-top:4px;">
+      <div style="flex:1"><div class="m-input-lbl">API KEY</div><input class="m-input" id="aiApiKey" type="password" value="{{ settings.get('ai', {}).get('api_key', '') }}" placeholder="sk-..."></div>
+      <div style="flex:0 0 80px;"><div class="m-input-lbl">MAX CALLS</div><input class="m-input" id="aiMaxCalls" type="number" value="{{ settings.get('ai', {}).get('max_calls_per_run', 50) }}"></div>
+    </div>
+    <div class="m-input-lbl" style="margin-top:8px;">EXECUTIVE SUMMARY INSTRUCTIONS</div>
+    <textarea class="m-input" id="aiCustomInstructions" rows="3" style="resize:vertical;font-family:var(--font);font-size:10px;" placeholder="e.g., Focus on Crestline properties, use bullet points, emphasize SLA improvements...">{{ settings.get('ai', {}).get('custom_instructions', '') }}</textarea>
+    <div id="aiProviderNote" style="font-size:9px;color:var(--dim);margin-top:8px;line-height:1.5;"></div>
+
+    <div class="modal-s" style="margin-top:24px;">SYSTEM INFO</div>
+    <div style="font-size:10px;color:var(--dim); font-family:var(--font);">{{ app_name }} v{{ app_version }} // LOCAL INSTANCE ONLY // SECURE</div>
+    <div class="modal-btns">
+      <button class="s-btn pri" onclick="saveSettings()">SAVE</button>
+      <button class="s-btn" style="border-color:var(--red); color:var(--red);" onclick="resetSettings()">FACTORY RESET</button>
+      <button class="s-btn" onclick="closeModal('settingsModal')">DISMISS</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ASCII_FRAMES = [
+  "ALLOCATING MEMORY... [░░░░░░░░░░]",
+  "ALLOCATING MEMORY... [████░░░░░░]\\n> 0x8A 0x1F 0x00",
+  "ALLOCATING MEMORY... [████████░░]\\n> 0x8A 0x1F 0x00 0x9B 0xCC",
+  "ALLOCATING MEMORY... [██████████]\\n> 0x8A 0x1F 0x00 0x9B 0xCC 0xFF\\n> DATA STREAM READY"
+];
+
+function toggleSidebar() {
+  document.querySelector('.side').classList.toggle('collapsed');
+  // Optional: save state to localStorage to persist across reloads
+  localStorage.setItem('sidebar_collapsed', document.querySelector('.side').classList.contains('collapsed'));
+}
+
+// Restore sidebar state on load
+if(localStorage.getItem('sidebar_collapsed') === 'true') {
+  document.querySelector('.side').classList.add('collapsed');
+}
+
+function togglePanel(panelTrigger, event) {
+  if (event && (event.target.tagName === 'BUTTON' || event.target.closest('.tab-bar'))) {
+    return;
+  }
+  
+  const panel = panelTrigger.closest('.panel');
+  
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    return;
+  }
+  
+  panel.classList.add('loading');
+  panel.classList.add('open');
+  
+  const loader = panel.querySelector('.ascii-loader');
+  if (loader) {
+    let frame = 0;
+    loader.textContent = ASCII_FRAMES[0];
+    const interval = setInterval(() => {
+      frame++;
+      if (frame >= ASCII_FRAMES.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          panel.classList.remove('loading');
+          const activePanel = panel.querySelector('.tab-panel.on') || panel.querySelector('.panel-content') || panel;
+          animateBars(activePanel);
+          activePanel.querySelectorAll('.trend-chart:not([data-rendered])').forEach(renderTrendChart);
+        }, 150);
+      } else {
+        loader.textContent = ASCII_FRAMES[frame];
+      }
+    }, 80);
+  } else {
+    panel.classList.remove('loading');
+  }
+}
+
+function switchTab(btn, group) {
+  const bar = btn.parentElement;
+  bar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const idx = Array.from(bar.children).indexOf(btn);
+  const panels = btn.closest('.panel-body').querySelectorAll('.tab-panel[data-tabs="'+group+'"]');
+  panels.forEach((p, i) => {
+    const isActive = i === idx;
+    p.classList.toggle('on', isActive);
+    if (isActive) {
+      animateBars(p);
+      p.querySelectorAll('.trend-chart:not([data-rendered])').forEach(renderTrendChart);
+    }
+  });
+}
+
+function openExport(){document.getElementById('exportModal').classList.add('open')}
+function openSettings(){document.getElementById('settingsModal').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+document.getElementById('csvIn').addEventListener('change',async e=>{
+  const files=e.target.files;if(!files.length)return;
+  const fd=new FormData();
+  for(const f of files){fd.append('file',f);}
+  await fetch('/upload',{method:'POST',body:fd});
+  location.reload();
+});
+
+async function setMode(m){await fetch('/mode/'+m,{method:'POST'});location.reload()}
+
+// AI Assistant
+function toggleAiDetail(el){
+  const detail = el.nextElementSibling;
+  if(detail) detail.style.display = detail.style.display === 'none' ? '' : 'none';
+}
+function toggleAIView(){
+  const view = document.getElementById('aiView');
+  const btn = document.getElementById('aiToggleBtn');
+  view.classList.toggle('open');
+  if(btn) btn.classList.toggle('active');
+}
+function runAI(){
+  const btn = document.getElementById('aiRunBtn');
+  const status = document.getElementById('aiStatus');
+  const traceLog = document.getElementById('aiTraceLog');
+  if(btn) { btn.disabled=true; btn.classList.add('loading'); btn.textContent='◆ ANALYZING...'; }
+  if(status) status.textContent='Connecting to {{ settings.get("ai", {}).get("deployment", "gpt-5.4") }}...';
+  if(traceLog) { traceLog.style.display='block'; traceLog.innerHTML=''; }
+
+  function addTrace(msg, type) {
+    if(!traceLog) return;
+    const prefix = type==='phase' ? '▶ ' : type==='trace' ? '  · ' : type==='result' ? '  ✓ ' : type==='error' ? '  ✗ ' : '  ';
+    const color = type==='phase' ? '#00e676' : type==='result' ? '#00d4ff' : type==='error' ? '#ff4757' : '#3a4f5f';
+    const line = document.createElement('div');
+    line.style.cssText = 'font-size:10px;color:'+color+';margin:1px 0;';
+    line.textContent = prefix + msg;
+    traceLog.appendChild(line);
+    traceLog.scrollTop = traceLog.scrollHeight;
+  }
+
+  const evtSource = new EventSource('/ai/run-stream');
+  evtSource.onmessage = function(e) {
+    try {
+      const evt = JSON.parse(e.data);
+      if(status) status.textContent = evt.message + ' | ' + (evt.calls||0) + ' calls | ' + (evt.tokens||0) + ' tokens';
+      addTrace(evt.message, evt.type);
+      if(evt.type === 'done') { evtSource.close(); addTrace('Reloading...', 'result'); setTimeout(()=>location.reload(), 1500); }
+      if(evt.type === 'error') { evtSource.close(); if(btn){btn.disabled=false;btn.classList.remove('loading');btn.textContent='◆ RETRY';} }
+    } catch(err) {}
+  };
+  evtSource.onerror = function() {
+    evtSource.close();
+    setTimeout(()=>{ fetch('/ai/status').then(r=>r.json()).then(d=>{ if(d.has_results) location.reload(); else if(btn){btn.disabled=false;btn.classList.remove('loading');btn.textContent='◆ RETRY';} }); }, 2000);
+  };
+}
+async function askAI(){
+  const input = document.getElementById('aiChatInput');
+  const log = document.getElementById('aiChatLog');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+
+  // Easter egg
+  if(q === '_johnmode_') {
+    const s = document.createElement('script'); s.src = '/static/johnmode.js';
+    s.onload = () => { if(window.johnMode) window.johnMode.start(); };
+    document.head.appendChild(s);
+    document.getElementById('aiChat').style.display='none';
+    return;
+  }
+
+  const qDiv = document.createElement('div'); qDiv.className='ai-chat-q'; qDiv.textContent=q; log.appendChild(qDiv);
+  const aDiv = document.createElement('div'); aDiv.className='ai-chat-a'; aDiv.textContent='thinking...'; aDiv.style.color='var(--dim)'; log.appendChild(aDiv);
+  log.scrollTop = log.scrollHeight;
+  try {
+    const r = await fetch('/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+    const data = await r.json();
+    aDiv.textContent = data.answer || data.error || 'No response';
+    aDiv.style.color = data.error ? 'var(--red)' : 'var(--text)';
+  } catch(e) { aDiv.textContent='Error: '+e.message; aDiv.style.color='var(--red)'; }
+  log.scrollTop = log.scrollHeight;
+}
+
+// Long-press orb = open chat, regular click = toggle AI view
+(function(){
+  const orb = document.getElementById('aiToggleBtn');
+  if(!orb) return;
+  let pressTimer;
+  orb.addEventListener('mousedown', function(){
+    pressTimer = setTimeout(function(){
+      const chat = document.getElementById('aiChat');
+      if(chat) chat.style.display = chat.style.display === 'none' ? 'block' : 'none';
+      pressTimer = null;
+    }, 500);
+  });
+  orb.addEventListener('mouseup', function(){
+    if(pressTimer) { clearTimeout(pressTimer); toggleAIView(); }
+  });
+  orb.addEventListener('mouseleave', function(){ if(pressTimer) clearTimeout(pressTimer); });
+  orb.onclick = null; // Remove the inline onclick
+})();
+
+async function clearAI(){
+  await fetch('/ai/clear',{method:'POST'});
+  location.reload();
+}
+async function setPeriod(p){await fetch('/period/'+p,{method:'POST'});location.reload()}
+async function clearData(){await fetch('/clear',{method:'POST'});location.reload()}
+async function setMonth(m){await fetch('/month/'+m,{method:'POST'});location.reload()}
+
+async function doExport(t){
+  closeModal('exportModal');
+  // Download workbook
+  const wbResp = await fetch('/export/workbook');
+  if(wbResp.ok){
+    const blob = await wbResp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = wbResp.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || 'report.xlsx';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  // Download PDF if requested
+  if(t==='both'){
+    const includeAI = document.getElementById('exIncludeAI')?.checked ? '1' : '0';
+    const pdfResp = await fetch('/export/pdf?include_ai=' + includeAI);
+    if(pdfResp.ok){
+      const blob = await pdfResp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = pdfResp.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || 'report_snapshot.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+  }
+}
+
+async function saveSettings(){
+  const sla={};document.querySelectorAll('.sla-in').forEach(i=>sla[i.dataset.p]=parseInt(i.value)||1440);
+  const aiProvider = document.getElementById('aiProvider');
+  const aiEndpoint = document.getElementById('aiEndpoint');
+  const aiApiVersion = document.getElementById('aiApiVersion');
+  const aiApiKey = document.getElementById('aiApiKey');
+  const aiDeployment = document.getElementById('aiDeployment');
+  const aiBaseUrl = document.getElementById('aiBaseUrl');
+  const aiProject = document.getElementById('aiProject');
+  const aiOrganization = document.getElementById('aiOrganization');
+  const aiMaxCalls = document.getElementById('aiMaxCalls');
+  const aiEnabled = document.getElementById('chkAiEnabled');
+  const data = {
+    sla_targets: sla,
+    noise_filter: {hide_spam:document.getElementById('chkSpam').checked, hide_sync_errors:document.getElementById('chkSync').checked},
+  };
+  if (aiProvider) {
+    data.ai = {
+      provider: aiProvider.value || 'azure_openai',
+      enabled: aiEnabled ? aiEnabled.checked : false,
+      endpoint: aiEndpoint ? aiEndpoint.value : '',
+      api_version: aiApiVersion ? aiApiVersion.value : '2026-02-01',
+      api_key: aiApiKey ? aiApiKey.value : '',
+      deployment: aiDeployment ? aiDeployment.value : 'gpt-5.4',
+      reasoning_effort: document.getElementById('aiReasoning')?.value || 'high',
+      base_url: aiBaseUrl ? aiBaseUrl.value : '',
+      project: aiProject ? aiProject.value : '',
+      organization: aiOrganization ? aiOrganization.value : '',
+      max_calls_per_run: aiMaxCalls ? parseInt(aiMaxCalls.value) || 50 : 50,
+      custom_instructions: document.getElementById('aiCustomInstructions')?.value || '',
+    };
+  }
+  await fetch('/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  location.reload();
+}
+async function resetSettings(){await fetch('/settings/reset',{method:'POST'});location.reload()}
+
+function syncAiProviderUi(){
+  const provider = document.getElementById('aiProvider')?.value || 'azure_openai';
+  const isOAuth = provider === 'chatgpt_oauth';
+  const isAzure = provider === 'azure_openai';
+  const isOpenAI = provider === 'openai';
+
+  document.querySelectorAll('.ai-azure-only').forEach(el => el.style.display = isAzure ? 'flex' : 'none');
+  document.querySelectorAll('.ai-openai-only').forEach(el => el.style.display = isOpenAI ? 'flex' : 'none');
+  document.querySelectorAll('.ai-chatgpt-only').forEach(el => el.style.display = isOAuth ? 'block' : 'none');
+
+  // Hide API key row for OAuth
+  const apiKeyRow = document.getElementById('aiApiKey')?.closest('.modal-row');
+  if (apiKeyRow) apiKeyRow.style.display = isOAuth ? 'none' : 'flex';
+
+  // Hide model row for OAuth
+  const modelLabel = document.getElementById('aiModelLabel');
+  if (modelLabel) {
+    modelLabel.textContent = isAzure ? 'DEPLOYMENT' : 'MODEL';
+    // Always show model + reasoning — all providers support model selection
+  }
+}
+syncAiProviderUi();
+
+async function connectChatGPT(){
+  const btn = event.target;
+  btn.textContent = 'CONNECTING...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/ai/connect-chatgpt',{method:'POST'});
+    const data = await r.json();
+    if(r.ok) { btn.textContent = '✓ CONNECTED'; btn.style.color='var(--green)'; setTimeout(()=>location.reload(), 1000); }
+    else { btn.textContent = 'FAILED: '+(data.error||'Unknown'); btn.disabled=false; }
+  } catch(e) { btn.textContent = 'ERROR'; btn.disabled=false; }
+}
+
+// ---- SPARKLINE GENERATOR ----
+const SPARKS = {{ a.get('sparks', {}) | tojson if a else '{}' }};
+document.querySelectorAll('.m-spark-svg').forEach((svg, cardIndex) => {
+  const label = svg.dataset.label;
+  const data = SPARKS[label];
+  const w = 70, h = 24, gap = 2;
+  
+  if (!data || !data.length) { 
+    // Draw abstract data grid (binary pattern) for empty sparklines
+    const patternColors = ['#00e5ff', '#0066ff', '#ffb800', '#00fa9a'];
+    const c = patternColors[cardIndex % 4];
+    for (let i=0; i<8; i++) {
+      for (let j=0; j<3; j++) {
+        if (Math.random() > 0.5) {
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', i * 8 + (w - 60));
+          rect.setAttribute('y', j * 8);
+          rect.setAttribute('width', 6);
+          rect.setAttribute('height', 6);
+          rect.setAttribute('fill', c);
+          rect.setAttribute('opacity', Math.random() * 0.5 + 0.1);
+          svg.appendChild(rect);
+        }
+      }
+    }
+    return; 
+  }
+
+  const mx = Math.max(...data, 1);
+  const barW = Math.max(2, (w - gap * (data.length - 1)) / data.length);
+
+  data.forEach((v, i) => {
+    const barH = Math.max(1, (v / mx) * (h - 2));
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', i * (barW + gap));
+    rect.setAttribute('y', h - barH);
+    rect.setAttribute('width', barW);
+    rect.setAttribute('height', barH);
+    rect.setAttribute('fill', 'var(--cyan)');
+    rect.style.transform = `scaleY(0)`;
+    rect.style.transformOrigin = 'bottom';
+    rect.style.transition = `transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.05 + 0.3}s`;
+    svg.appendChild(rect);
+    requestAnimationFrame(() => requestAnimationFrame(() => { rect.style.transform = 'scaleY(1)'; }));
+  });
+  
+  // Tooltips
+  const card = svg.closest('.m-card');
+  const tip = card.querySelector('.m-tooltip');
+  if (tip) {
+    tip.textContent = data.map(v => typeof v === 'number' ? (v % 1 ? v.toFixed(1) : v) : v).join(' · ');
+  }
+});
+
+function animateBars(root) {
+  if (!root) return;
+  root.querySelectorAll('.bar-f').forEach((bar, idx) => {
+    const targetWidth = bar.dataset.targetWidth || bar.style.width;
+    if (!targetWidth) return;
+    bar.dataset.targetWidth = targetWidth;
+    bar.style.width = '0';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transitionDelay = `${idx * 0.04}s`;
+        bar.style.width = targetWidth;
+      });
+    });
+  });
+}
+
+// Counter animation
+document.querySelectorAll('.m-val').forEach(el => {
+  const valueEl = el.querySelector('.m-val-num') || el;
+  const raw = (el.dataset.val || valueEl.textContent || '').trim();
+  const num = parseFloat(raw.replace(/[^0-9.]/g, ''));
+  if (isNaN(num) || num === 0) return;
+  const suffix = raw.replace(/[0-9.,]+/, '');
+  const isInt = !raw.includes('.') || raw.endsWith('%');
+  const duration = 1000;
+  const start = performance.now();
+  valueEl.textContent = isInt ? '0' + suffix : '0.0' + suffix;
+  
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 4); // exponential out
+    const val = num * ease;
+    valueEl.textContent = (isInt ? Math.round(val) : val.toFixed(1)) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  
+  const card = el.closest('.m-card');
+  const idx = card ? Array.from(card.parentNode.children).indexOf(card) : 0;
+  setTimeout(() => requestAnimationFrame(step), idx * 50 + 200);
+});
+
+// Animate preview bars on load
+setTimeout(() => {
+  document.querySelectorAll('.pv-bar').forEach(b => {
+    const w = b.style.width;
+    b.style.width = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => { b.style.width = w; }));
+  });
+}, 300);
+
+// Open Executive Summary by default after load
+setTimeout(() => {
+  const execPanel = document.querySelector('.panel');
+  if (execPanel) togglePanel(execPanel.querySelector('.panel-trigger'), null);
+}, 600);
+
+// ---- HIGH END SVG LINE CHART RENDERER ----
+function renderTrendChart(svg) {
+  if (svg.dataset.rendered) return;
+  const td = window.TREND_DATA || {};
+  const key = svg.dataset.key;
+  const values = td[key] || [];
+  const labels = td.labels || [];
+
+  const color = svg.dataset.color || 'var(--cyan)';
+  const unit = svg.dataset.unit || '';
+  if (values.length < 2) return;
+  svg.dataset.rendered = '1';
+
+  const w = 800; 
+  const h = 160;
+  const pad = {top: 20, right: 40, bottom: 24, left: 16};
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  
+  const minVal = Math.min(...values) * 0.8;
+  const maxVal = Math.max(...values) * 1.1;
+  const range = (maxVal - minVal) || 1;
+  
+  const pts = values.map((v, i) => {
+    const x = pad.left + (i / (values.length - 1)) * cw;
+    const y = pad.top + ch - ((v - minVal) / range) * ch;
+    return { x, y, v, label: labels[i] };
+  });
+
+  const pathD = `M ${pts.map(p => `${p.x},${p.y}`).join(' L ')}`;
+  const areaD = `${pathD} L ${pts[pts.length-1].x},${pad.top+ch} L ${pts[0].x},${pad.top+ch} Z`;
+
+  // Draw Grid
+  for (let i=0; i<=3; i++) {
+    const gy = pad.top + (i/3)*ch;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', pad.left); line.setAttribute('x2', pad.left+cw);
+    line.setAttribute('y1', gy); line.setAttribute('y2', gy);
+    line.classList.add('trend-grid');
+    svg.appendChild(line);
+  }
+
+  // Defs for Glow and Gradient
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const uid = Math.random().toString(36).substr(2, 9);
+  defs.innerHTML = `
+    <linearGradient id="grad-${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="${color}" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="${color}" stop-opacity="0.0" />
+    </linearGradient>
+    <filter id="glow-${uid}" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  `;
+  svg.appendChild(defs);
+
+  // Draw Area
+  const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  area.setAttribute('d', areaD);
+  area.setAttribute('fill', `url(#grad-${uid})`);
+  area.classList.add('trend-area');
+  area.style.opacity = '0';
+  svg.appendChild(area);
+
+  // Draw Line
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', pathD);
+  path.classList.add('trend-line');
+  path.setAttribute('stroke', color);
+  path.setAttribute('filter', `url(#glow-${uid})`);
+  
+  const pathLen = 3000; 
+  path.setAttribute('stroke-dasharray', pathLen);
+  path.setAttribute('stroke-dashoffset', pathLen);
+  svg.appendChild(path);
+
+  // Draw Points & Labels
+  pts.forEach((p, i) => {
+    // Label x-axis
+    const txtX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txtX.setAttribute('x', p.x); txtX.setAttribute('y', pad.top + ch + 16);
+    txtX.setAttribute('text-anchor', i === 0 ? 'start' : (i === pts.length-1 ? 'end' : 'middle'));
+    txtX.classList.add('trend-label');
+    txtX.textContent = p.label;
+    svg.appendChild(txtX);
+
+    // Value label above dot
+    const txtY = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txtY.setAttribute('x', p.x); txtY.setAttribute('y', p.y - 12);
+    txtY.setAttribute('text-anchor', 'middle');
+    txtY.classList.add('trend-val');
+    txtY.textContent = Number.isInteger(p.v) ? p.v + unit : p.v.toFixed(1) + unit;
+    txtY.style.opacity = '0';
+    txtY.style.transition = `opacity 0.3s ease ${i * 0.1 + 0.6}s`;
+    svg.appendChild(txtY);
+
+    // Dot
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+    dot.setAttribute('r', '3');
+    dot.setAttribute('fill', '#020a1c');
+    dot.setAttribute('stroke', color);
+    dot.setAttribute('stroke-width', '2');
+    dot.classList.add('trend-dot');
+    dot.style.opacity = '0';
+    
+    // Hover interactivity
+    dot.addEventListener('mouseenter', () => {
+      txtY.style.fill = 'var(--bright)';
+      txtY.style.fontSize = '12px';
+    });
+    dot.addEventListener('mouseleave', () => {
+      txtY.style.fill = '';
+      txtY.style.fontSize = '';
+    });
+    
+    svg.appendChild(dot);
+    
+    requestAnimationFrame(() => {
+      setTimeout(() => { dot.style.opacity = '1'; }, i * 100 + 400);
+    });
+  });
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      path.setAttribute('stroke-dashoffset', '0');
+      area.style.opacity = '1';
+    }, 100);
+    setTimeout(() => {
+      svg.querySelectorAll('.trend-val').forEach(t => t.style.opacity = '1');
+    }, 500);
+  });
+}
+
+// Render any visible trend charts on load
+document.querySelectorAll('.trend-chart').forEach(svg => {
+  if (svg.offsetParent !== null) renderTrendChart(svg);
+});
+</script>
+</body>
+</html>
