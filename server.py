@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+"""Primary product UI entry point.
+
+FastAPI + Jinja is the main dashboard surface for ongoing development.
+Keep business logic in shared modules so the legacy Streamlit fallback can
+continue to reuse validation, metrics, exports, and settings safely.
+"""
+
 import copy
 import io
 import json
+import logging
 import os
-import tempfile
+import uuid
 from pathlib import Path
 
 import pandas as pd
@@ -17,11 +25,24 @@ from ai_engine import AIAnalysisResult, AIEngine, serialize_ai_results  # noqa: 
 from comparison import bucket_by_month, compute_comparison, serialize_comparison
 from config import APP_NAME, APP_VERSION, DEFAULT_LOGO_PATH, REPORT_MODE_CUSTOMER, REPORT_MODE_INTERNAL
 from metrics import format_minutes
-from settings import load_settings, save_settings, reset_settings, MODE_CUSTOMER, MODE_INTERNAL
+from settings import (
+    load_settings,
+    save_settings,
+    reset_settings,
+    get_ai_settings,
+    is_ai_enabled,
+    MODE_CUSTOMER,
+    MODE_INTERNAL,
+)
+from upload_validation import (
+    build_unsupported_upload_message,
+    validate_supported_upload_schema,
+)
 from utils import build_report_artifacts, build_report_title, default_filename_from_title, infer_date_range, infer_partner_name
 from validators import ValidationError, validate_and_prepare_dataframe
 
 BASE_DIR = Path(__file__).resolve().parent
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -72,7 +93,12 @@ def _clear_ai_cache() -> None:
     _state["ai_results"] = None
 
 
+def _ai_disabled_response() -> JSONResponse:
+    return JSONResponse({"error": "AI features are currently disabled."}, status_code=400)
+
+
 def _resolve_ai_provider_config(ai_cfg: dict) -> dict[str, str]:
+    ai_cfg = get_ai_settings({"ai": ai_cfg})
     provider = ai_cfg.get("provider", "azure_openai")
     if provider == "azure_openai":
         return {
@@ -96,10 +122,10 @@ def _ensure_ai_context() -> tuple[dict, JSONResponse | None]:
     if settings.get("mode") != MODE_INTERNAL:
         return {}, JSONResponse({"error": "AI analysis is only available in internal mode"}, status_code=400)
 
-    ai_cfg = settings.get("ai", {})
-    if not ai_cfg.get("enabled"):
-        return {}, JSONResponse({"error": "AI is not enabled in settings"}, status_code=400)
+    if not is_ai_enabled(settings):
+        return {}, _ai_disabled_response()
 
+    ai_cfg = get_ai_settings(settings)
     provider = ai_cfg.get("provider", "azure_openai")
     resolved = _resolve_ai_provider_config(ai_cfg)
     if provider == "azure_openai":
@@ -133,29 +159,41 @@ def _rebuild_artifacts_for_period():
     if not buckets:
         return
 
-    period = _state.get("period", "1M")
-    selected_month = _state.get("selected_month", "")
+    payload = _build_period_dashboard_payload(
+        buckets,
+        period=_state.get("period", "1M"),
+        selected_month=_state.get("selected_month", ""),
+        settings=_state["settings"],
+    )
+    _state.update(payload)
+    _state["error"] = ""
 
-    # Determine which buckets to use for the dashboard
+
+def _select_target_buckets(buckets, *, period: str, selected_month: str):
     if period == "1M":
         if selected_month:
             target = [b for b in buckets if b.label == selected_month]
         else:
-            target = buckets[-1:]  # latest month
+            target = buckets[-1:]
     elif period == "QTR":
         target = buckets[-3:]
     elif period == "HALF":
         target = buckets[-6:]
-    else:  # YR
+    else:
         target = buckets[-12:]
 
     if not target:
         target = buckets[-1:]
+    return target
 
-    # Combine selected buckets' data
+
+def _build_period_dashboard_payload(buckets, *, period: str, selected_month: str, settings: dict) -> dict:
+    """Build dashboard state for the selected period without mutating global state."""
+    if not buckets:
+        raise ValidationError("No valid ticket data was available after upload.")
+
+    target = _select_target_buckets(buckets, period=period, selected_month=selected_month)
     period_df = pd.concat([b.df for b in target], ignore_index=True)
-
-    settings = _state["settings"]
     mode = REPORT_MODE_INTERNAL if settings.get("mode") == MODE_INTERNAL else REPORT_MODE_CUSTOMER
     artifacts = build_report_artifacts(period_df, report_mode=mode, settings=settings)
 
@@ -163,13 +201,14 @@ def _rebuild_artifacts_for_period():
     date_range = infer_date_range(period_df)
     title = build_report_title(partner, date_range)
 
-    _state["prepared_df"] = period_df
-    _state["artifacts"] = artifacts
-    _state["partner_name"] = partner
-    _state["date_range"] = date_range
-    _state["report_title"] = title
-    _state["output_filename"] = default_filename_from_title(title)
-    _state["error"] = ""
+    return {
+        "prepared_df": period_df,
+        "artifacts": artifacts,
+        "partner_name": partner,
+        "date_range": date_range,
+        "report_title": title,
+        "output_filename": default_filename_from_title(title),
+    }
 
 
 def _serialize_artifacts(artifacts, comparison=None) -> dict:
@@ -266,26 +305,81 @@ def _serialize_artifacts(artifacts, comparison=None) -> dict:
 
 def _serialize_analytics(analytics) -> dict:
     """Convert AdvancedAnalytics to JSON-safe dict."""
+    def empty_payload() -> dict:
+        return {
+            "available": False,
+            "complexity_summary": {"mean": 0, "median": 0, "high_count": 0, "low_count": 0},
+            "complexity_top": [],
+            "keyword_categories": [],
+            "keyword_escalation": [],
+            "workload_balance": [],
+            "peak_heatmap": {
+                "grid": [[0 for _ in range(24)] for _ in range(7)],
+                "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                "hours": list(range(24)),
+                "peak_hour": 0,
+                "peak_day": "",
+                "peak_count": 0,
+                "max_val": 0,
+            },
+            "kb_coverage": [],
+            "company_patterns": [],
+            "escalation_timing": [],
+            "description_complexity": [],
+        }
+
     if analytics is None:
-        return {}
+        return empty_payload()
 
     def df_to_records(df):
         if df is None or (hasattr(df, "empty") and df.empty):
             return []
         return json.loads(df.to_json(orient="records", default_handler=str))
 
-    return {
-        "complexity_summary": analytics.complexity_summary,
-        "complexity_top": df_to_records(analytics.complexity_scores.head(10)),
-        "keyword_categories": df_to_records(analytics.keyword_categories),
-        "keyword_escalation": df_to_records(analytics.keyword_escalation),
-        "workload_balance": df_to_records(analytics.workload_balance),
-        "peak_heatmap": analytics.peak_heatmap,
-        "kb_coverage": df_to_records(analytics.kb_coverage),
-        "company_patterns": df_to_records(analytics.company_patterns.head(12)),
-        "escalation_timing": df_to_records(analytics.escalation_timing),
-        "description_complexity": df_to_records(analytics.description_complexity),
-    }
+    payload = empty_payload()
+    try:
+        peak_heatmap = getattr(analytics, "peak_heatmap", {}) or {}
+        grid = peak_heatmap.get("grid") if isinstance(peak_heatmap, dict) else []
+        normalized_grid = []
+        for day_index in range(7):
+            source_row = grid[day_index] if isinstance(grid, list) and day_index < len(grid) and isinstance(grid[day_index], list) else []
+            normalized_row = []
+            for hour_index in range(24):
+                value = source_row[hour_index] if hour_index < len(source_row) else 0
+                try:
+                    normalized_row.append(int(value))
+                except (TypeError, ValueError):
+                    normalized_row.append(0)
+            normalized_grid.append(normalized_row)
+
+        payload.update(
+            {
+                "available": True,
+                "complexity_summary": getattr(analytics, "complexity_summary", payload["complexity_summary"]),
+                "complexity_top": df_to_records(getattr(analytics, "complexity_scores", pd.DataFrame()).head(10)),
+                "keyword_categories": df_to_records(getattr(analytics, "keyword_categories", pd.DataFrame())),
+                "keyword_escalation": df_to_records(getattr(analytics, "keyword_escalation", pd.DataFrame())),
+                "workload_balance": df_to_records(getattr(analytics, "workload_balance", pd.DataFrame())),
+                "peak_heatmap": {
+                    "grid": normalized_grid,
+                    "days": peak_heatmap.get("days") if isinstance(peak_heatmap.get("days"), list) and len(peak_heatmap.get("days")) == 7 else payload["peak_heatmap"]["days"],
+                    "hours": peak_heatmap.get("hours") if isinstance(peak_heatmap.get("hours"), list) and len(peak_heatmap.get("hours")) == 24 else payload["peak_heatmap"]["hours"],
+                    "peak_hour": int(peak_heatmap.get("peak_hour", 0) or 0),
+                    "peak_day": str(peak_heatmap.get("peak_day", "") or ""),
+                    "peak_count": int(peak_heatmap.get("peak_count", 0) or 0),
+                    "max_val": int(peak_heatmap.get("max_val", 0) or 0),
+                },
+                "kb_coverage": df_to_records(getattr(analytics, "kb_coverage", pd.DataFrame())),
+                "company_patterns": df_to_records(getattr(analytics, "company_patterns", pd.DataFrame()).head(12)),
+                "escalation_timing": df_to_records(getattr(analytics, "escalation_timing", pd.DataFrame())),
+                "description_complexity": df_to_records(getattr(analytics, "description_complexity", pd.DataFrame())),
+            }
+        )
+    except Exception:
+        logger.exception("Analytics serialization failed; returning safe defaults to keep the dashboard responsive.")
+        return empty_payload()
+
+    return payload
 
 
 def _build_sparklines(artifacts, comparison=None) -> dict[str, list[int]]:
@@ -356,9 +450,40 @@ def _build_sparklines(artifacts, comparison=None) -> dict[str, list[int]]:
     return sparks
 
 
+def _build_partner_email_message(partner_name: str, date_range: str, report_title: str) -> str:
+    period = str(date_range or "").strip()
+    if period:
+        return (
+            f"Attached is your {APP_NAME} report for {period}. Please take a look ahead of our "
+            "governance call, and let me know if there is anything specific you would like us to review."
+        )
+
+    return (
+        f"Attached is your {APP_NAME} report. Please take a look ahead of our governance call, "
+        "and let me know if there is anything specific you would like us to review."
+    )
+
+
+def _default_include_trends_tab() -> bool:
+    return False
+
+
+def _default_include_heatmap_tab() -> bool:
+    return False
+
+
+def _default_include_daily_volume_tab() -> bool:
+    return False
+
+
+def _default_include_slo_tab() -> bool:
+    return False
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     settings = _state["settings"]
+    ai_enabled = is_ai_enabled(settings)
     artifacts_data = _serialize_artifacts(_state["artifacts"], _state.get("comparison"))
     html_content = render_template("dashboard.html", {
         "app_name": APP_NAME,
@@ -370,6 +495,15 @@ async def index(request: Request):
         "report_title": _state["report_title"],
         "output_filename": _state["output_filename"],
         "csv_name": _state["csv_name"],
+        "partner_email_message": _build_partner_email_message(
+            _state["partner_name"],
+            _state["date_range"],
+            _state["report_title"],
+        ),
+        "include_trends_default": _default_include_trends_tab(),
+        "include_heatmap_default": _default_include_heatmap_tab(),
+        "include_daily_volume_default": _default_include_daily_volume_tab(),
+        "include_slo_default": _default_include_slo_tab(),
         "error": _state["error"],
         "has_data": _state["artifacts"] is not None,
         "a": artifacts_data,
@@ -380,8 +514,8 @@ async def index(request: Request):
         "available_months": [b.label for b in _state.get("buckets", [])],
         "comp": serialize_comparison(_state["comparison"]) if _state.get("comparison") else {"has_comparison": False},
         "file_count": len(_state.get("all_dfs", [])),
-        "ai": serialize_ai_results(_state.get("ai_results")),
-        "ai_enabled": _state["settings"].get("ai", {}).get("enabled", False),
+        "ai": serialize_ai_results(_state.get("ai_results") if ai_enabled else None),
+        "ai_enabled": ai_enabled,
     })
     return HTMLResponse(content=html_content)
 
@@ -398,57 +532,84 @@ async def upload_csv(file: list[UploadFile] = File(...)):
                 status_code=400,
             )
 
-        # A fresh picker selection should replace the current working set.
-        _state["all_dfs"] = []
-        _state["csv_names"] = []
-        _clear_ai_cache()
+        staged_dfs: list[tuple[str, pd.DataFrame]] = []
+        staged_csv_names: list[str] = []
 
         for upload in uploads:
             contents = await upload.read()
+            fname = upload.filename or ""
             raw_df = pd.read_csv(io.BytesIO(contents))
+            schema_result = validate_supported_upload_schema(raw_df)
+            if not schema_result.is_supported:
+                logger.warning(
+                    "Upload rejected for %s because it does not match a supported created-ticket export format. Canonical missing: %s. Power BI missing: %s. Source hint: %s",
+                    fname or "<unknown>",
+                    schema_result.schema_candidates.get("canonical_created_ticket", []),
+                    schema_result.schema_candidates.get("power_bi_ticket_export", []),
+                    schema_result.source_hint,
+                )
+                raise ValidationError(build_unsupported_upload_message(schema_result))
+
             result = validate_and_prepare_dataframe(raw_df)
             prepared_df = result.dataframe
+            logger.info(
+                "Accepted upload %s using %s normalization path.",
+                fname or "<unknown>",
+                result.source_schema,
+            )
 
-            fname = upload.filename or ""
             print(f"[UPLOAD] {fname}: {len(prepared_df)} rows, {len(raw_df)} raw rows")
 
-            # Replace if same filename already exists, otherwise append
-            existing_idx = next((i for i, (n, _) in enumerate(_state["all_dfs"]) if n == fname), None)
+            existing_idx = next((i for i, (n, _) in enumerate(staged_dfs) if n == fname), None)
             if existing_idx is not None:
                 print(f"[UPLOAD] Replacing existing {fname}")
-                _state["all_dfs"][existing_idx] = (fname, prepared_df)
+                staged_dfs[existing_idx] = (fname, prepared_df)
             else:
                 print(f"[UPLOAD] New file {fname}")
-                _state["all_dfs"].append((fname, prepared_df))
-                _state["csv_names"].append(fname)
+                staged_dfs.append((fname, prepared_df))
+                staged_csv_names.append(fname)
 
         # Combine all uploaded data
-        total_dfs = [(n, len(df)) for n, df in _state["all_dfs"]]
+        total_dfs = [(n, len(df)) for n, df in staged_dfs]
         print(f"[UPLOAD] State has {len(total_dfs)} files: {total_dfs}")
-        combined = pd.concat([df for _, df in _state["all_dfs"]], ignore_index=True)
+        combined = pd.concat([df for _, df in staged_dfs], ignore_index=True)
         print(f"[UPLOAD] Combined: {len(combined)} rows")
 
-        _state["csv_name"] = ", ".join(_state["csv_names"][-3:])
-        if len(_state["csv_names"]) > 3:
-            _state["csv_name"] = f"{len(_state['csv_names'])} files loaded"
+        csv_name = ", ".join(staged_csv_names[-3:])
+        if len(staged_csv_names) > 3:
+            csv_name = f"{len(staged_csv_names)} files loaded"
 
         # Build monthly buckets and comparison
         buckets = bucket_by_month(combined)
-        _state["buckets"] = buckets
-
         period = _state.get("period", "1M")
         comparison = compute_comparison(buckets, period=period)
-        _state["comparison"] = comparison
+        period_payload = _build_period_dashboard_payload(
+            buckets,
+            period=period,
+            selected_month=_state.get("selected_month", ""),
+            settings=_state["settings"],
+        )
 
-        # Use the SELECTED PERIOD's data for the main dashboard (not all combined)
-        _rebuild_artifacts_for_period()
+        _state["all_dfs"] = staged_dfs
+        _state["csv_names"] = staged_csv_names
+        _state["csv_name"] = csv_name
+        _state["buckets"] = buckets
+        _state["comparison"] = comparison
+        _state.update(period_payload)
+        _state["error"] = ""
+        _clear_ai_cache()
 
         return JSONResponse({"status": "ok", "redirect": "/"})
     except ValidationError as e:
+        logger.warning("Upload validation failed: %s", e)
         _state["error"] = str(e)
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
     except Exception as e:
-        _state["error"] = f"Could not read CSV: {e}"
+        logger.exception("Unexpected upload failure while reading CSV.")
+        _state["error"] = (
+            "The uploaded CSV does not match a supported created-ticket export format. "
+            "Supported uploads are either the canonical created-ticket export or the mapped Power BI ticket export."
+        )
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
 
 
@@ -611,11 +772,12 @@ async def run_ai_analysis():
 
 @app.get("/ai/status")
 async def ai_status():
-    result = _state.get("ai_results")
     settings = _state["settings"]
+    enabled = is_ai_enabled(settings)
+    result = _state.get("ai_results") if enabled else None
     return JSONResponse(
         {
-            "enabled": settings.get("ai", {}).get("enabled", False),
+            "enabled": enabled,
             "mode": settings.get("mode", MODE_CUSTOMER),
             "running": False,
             "has_results": result is not None,
@@ -628,7 +790,8 @@ async def ai_status():
 
 @app.get("/ai/results")
 async def ai_results():
-    return JSONResponse(serialize_ai_results(_state.get("ai_results")))
+    result = _state.get("ai_results") if is_ai_enabled(_state["settings"]) else None
+    return JSONResponse(serialize_ai_results(result))
 
 
 @app.post("/ai/summary")
@@ -661,14 +824,16 @@ async def ai_summary():
 
 @app.post("/ai/connect-chatgpt")
 async def connect_chatgpt():
+    if not is_ai_enabled(_state["settings"]):
+        return _ai_disabled_response()
     try:
         from codex_auth import authenticate
         authenticate()
         settings = _state["settings"]
-        ai_cfg = settings.setdefault("ai", {})
+        ai_cfg = get_ai_settings(settings)
         ai_cfg["provider"] = "chatgpt_oauth"
-        ai_cfg["enabled"] = True
         ai_cfg["chatgpt_connected"] = True
+        settings["ai"] = ai_cfg
         save_settings(settings)
         _state["settings"] = settings
         return JSONResponse({"status": "ok", "message": "ChatGPT connected via OAuth"})
@@ -743,37 +908,78 @@ async def clear_ai():
 
 
 @app.get("/export/workbook")
-async def export_workbook():
+async def export_workbook(
+    include_trends: str = "0",
+    include_heatmap: str = "0",
+    include_daily_volume: str = "0",
+    include_slo: str = "0",
+    monthly_ticket_report_mode: str = "0",
+):
     if _state["prepared_df"] is None:
         return JSONResponse({"error": "No data"}, status_code=400)
 
     from excel_builder import ExcelReportBuilder, ReportRequest
     settings = _state.get("settings") or load_settings()
     report_mode = REPORT_MODE_INTERNAL if settings.get("mode") == MODE_INTERNAL else REPORT_MODE_CUSTOMER
+    ai_results = _state.get("ai_results") if is_ai_enabled(settings) else None
+    include_trends_tab = include_trends == "1"
+    include_heatmap_tab = include_heatmap == "1"
+    include_daily_volume_tab = include_daily_volume == "1"
+    include_slo_tab = include_slo == "1"
+    monthly_mode_enabled = monthly_ticket_report_mode == "1"
 
-    with tempfile.TemporaryDirectory() as tmp:
-        logo_path = DEFAULT_LOGO_PATH
-        out_path = Path(tmp) / f"{_state['output_filename']}.xlsx"
+    export_df = _state["prepared_df"]
+    export_partner = _state["partner_name"]
+    export_date_range = _state["date_range"]
+    export_report_title = _state["report_title"]
+    export_filename = _state["output_filename"]
 
-        builder = ExcelReportBuilder()
-        request = ReportRequest(
-            dataframe=_state["prepared_df"],
-            report_title=_state["report_title"],
-            logo_path=logo_path,
-            output_path=out_path,
-            partner_name=_state["partner_name"],
-            date_range=_state["date_range"],
-            report_mode=report_mode,
-            settings=settings,
-            ai_results=_state.get("ai_results"),
-        )
-        built = builder.build_report(request)
+    if monthly_mode_enabled:
+        if _state.get("all_dfs"):
+            export_df = pd.concat([df for _, df in _state["all_dfs"]], ignore_index=True)
+        elif _state.get("buckets"):
+            export_df = pd.concat([bucket.df for bucket in _state["buckets"]], ignore_index=True)
+
+        inferred_partner = infer_partner_name(export_df)
+        inferred_date_range = infer_date_range(export_df)
+        export_partner = inferred_partner or export_partner
+        export_date_range = inferred_date_range or export_date_range
+        export_report_title = build_report_title(export_partner, export_date_range)
+        base_filename = default_filename_from_title(export_report_title)[:72].rstrip("_") or "khd_ticket_report"
+        export_filename = f"{base_filename}_Monthly_Ticket_Report"
+
+    export_dir = BASE_DIR / ".tmp_exports"
+    export_dir.mkdir(exist_ok=True)
+    logo_path = DEFAULT_LOGO_PATH
+    out_path = export_dir / f"{export_filename}_{uuid.uuid4().hex}.xlsx"
+
+    builder = ExcelReportBuilder()
+    request = ReportRequest(
+        dataframe=export_df,
+        report_title=export_report_title,
+        logo_path=logo_path,
+        output_path=out_path,
+        partner_name=export_partner,
+        date_range=export_date_range,
+        report_mode=report_mode,
+        settings=settings,
+        ai_results=ai_results,
+        include_trends=include_trends_tab,
+        include_heatmap=include_heatmap_tab,
+        include_daily_volume=include_daily_volume_tab,
+        include_slo=include_slo_tab,
+        monthly_ticket_report_mode=monthly_mode_enabled,
+    )
+    built = builder.build_report(request)
+    try:
         data = built.read_bytes()
+    finally:
+        built.unlink(missing_ok=True)
 
     return StreamingResponse(
         io.BytesIO(data),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{_state["output_filename"]}.xlsx"'},
+        headers={"Content-Disposition": f'attachment; filename="{export_filename}.xlsx"'},
     )
 
 
@@ -785,7 +991,7 @@ async def export_pdf(include_ai: str = "1"):
     from pdf_builder import ExecutivePdfSnapshotBuilder
 
     logo_bytes = DEFAULT_LOGO_PATH.read_bytes() if DEFAULT_LOGO_PATH.exists() else None
-    ai_results = _state.get("ai_results") if include_ai == "1" else None
+    ai_results = _state.get("ai_results") if include_ai == "1" and is_ai_enabled(_state.get("settings")) else None
     builder = ExecutivePdfSnapshotBuilder()
     pdf_bytes = builder.build_pdf_bytes(
         report_title=_state["report_title"],
