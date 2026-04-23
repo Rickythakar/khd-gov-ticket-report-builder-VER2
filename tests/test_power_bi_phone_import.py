@@ -145,12 +145,12 @@ class PowerBiPhoneImportTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Power BI phone export columns", response.json()["message"])
+        self.assertIn("Unsupported upload format", response.json()["message"])
 
         page = client.get("/")
         self.assertEqual(page.status_code, 200)
         self.assertIn("[ERR]", page.text)
-        self.assertIn("Power BI phone export columns", page.text)
+        self.assertIn("supported ticket export or phone metrics export", page.text)
 
     def test_ticket_and_phone_states_can_coexist_and_export_with_optional_phone_metrics_tab(self) -> None:
         server = self.load_server_module("power_bi_phone_server_coexist")

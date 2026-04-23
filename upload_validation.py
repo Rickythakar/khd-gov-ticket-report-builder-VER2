@@ -31,6 +31,15 @@ CREATED_TICKET_SCHEMA_REQUIRED_COLUMNS = [
     "Source",
 ]
 
+CANONICAL_TICKET_SCHEMA_GROUPS: dict[str, tuple[str, ...]] = {
+    "ticket_id": ("Ticket Number", "Task Number"),
+    "company": ("Company", "Account Name"),
+    "created": ("Created", "Create Timestamp", "Created Date"),
+    "issue_type": ("Issue Type",),
+    "queue": ("Queue", "Queue Name", "First Queue Name"),
+    "source": ("Source",),
+}
+
 
 @dataclass
 class SupportedUploadValidationResult:
@@ -48,12 +57,11 @@ def detect_source_hint(dataframe: pd.DataFrame) -> str:
     normalized_columns = {normalize_header(column) for column in list(dataframe.columns)}
 
     power_bi_signals = {
+        "my value",
         "khd ticket number",
         "msp ticket number",
-        "pickup slo status",
-        "take back count",
-        "queue name",
-        "created hour",
+        "partner",
+        "client",
     }
     if normalized_columns & power_bi_signals:
         return "power_bi"
@@ -70,14 +78,27 @@ def detect_source_hint(dataframe: pd.DataFrame) -> str:
         return "power_bi_phone"
 
     autotask_signals = {
-        "ticket #",
-        "service ticket number",
-        "nexus ticket #",
+        "task number",
+        "parent task number",
+        "parent account name",
+        "account name",
+        "escalation events",
     }
     if normalized_columns & autotask_signals:
         return "autotask"
 
     return "unknown"
+
+
+def _resolve_group_match(
+    normalized_columns: dict[str, str],
+    candidates: tuple[str, ...],
+) -> str | None:
+    for candidate in candidates:
+        original_name = normalized_columns.get(normalize_header(candidate))
+        if original_name:
+            return original_name
+    return None
 
 
 def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUploadValidationResult:
@@ -86,6 +107,7 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
     mapped_columns: dict[str, str] = {}
     matched_required: set[str] = set()
     normalized_columns = {normalize_header(column): str(column) for column in list(dataframe.columns)}
+    canonical_group_matches: dict[str, str] = {}
 
     for original_name in list(dataframe.columns):
         canonical_name = alias_lookup.get(normalize_header(original_name))
@@ -94,7 +116,17 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
             if canonical_name in CREATED_TICKET_SCHEMA_REQUIRED_COLUMNS:
                 matched_required.add(canonical_name)
 
+    for group_name, candidates in CANONICAL_TICKET_SCHEMA_GROUPS.items():
+        matched_column = _resolve_group_match(normalized_columns, candidates)
+        if matched_column:
+            canonical_group_matches[group_name] = matched_column
+
     missing_required = [column for column in CREATED_TICKET_SCHEMA_REQUIRED_COLUMNS if column not in matched_required]
+    canonical_group_missing = [
+        group_name
+        for group_name in CANONICAL_TICKET_SCHEMA_GROUPS
+        if group_name not in canonical_group_matches
+    ]
     power_bi_missing = [
         column_name
         for column_name in POWER_BI_REQUIRED_SOURCE_COLUMNS
@@ -116,10 +148,11 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
         if normalize_header(source_name) in normalized_columns
     }
 
-    if not missing_required:
+    if not canonical_group_missing:
+        matched_canonical_columns = sorted(set(mapped_columns.values()) | set(canonical_group_matches.values()))
         return SupportedUploadValidationResult(
             is_supported=True,
-            matched_required_columns=sorted(matched_required),
+            matched_required_columns=matched_canonical_columns,
             missing_required_columns=[],
             mapped_columns=mapped_columns,
             source_hint=detect_source_hint(dataframe),
@@ -130,7 +163,6 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
                 PHONE_SOURCE_SCHEMA: phone_missing,
             },
         )
-
     if not power_bi_missing:
         matched_power_bi_columns = [
             POWER_BI_TO_CANONICAL_MAP.get(column_name, column_name)
@@ -177,7 +209,7 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
         source_hint=detect_source_hint(dataframe),
         accepted_schema="unknown",
         schema_candidates={
-            "canonical_created_ticket": missing_required,
+            "canonical_created_ticket": canonical_group_missing,
             "power_bi_ticket_export": power_bi_missing,
             PHONE_SOURCE_SCHEMA: phone_missing,
         },
@@ -185,28 +217,6 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
 
 
 def build_unsupported_upload_message(result: SupportedUploadValidationResult) -> str:
-    canonical_missing = result.schema_candidates.get("canonical_created_ticket", result.missing_required_columns)
-    power_bi_missing = result.schema_candidates.get("power_bi_ticket_export", [])
-    phone_missing = result.schema_candidates.get(PHONE_SOURCE_SCHEMA, [])
-    if result.source_hint == "power_bi_phone" or (phone_missing and len(phone_missing) <= len(canonical_missing) and len(phone_missing) <= len(power_bi_missing or ["x"])):
-        missing = ", ".join(phone_missing)
-        return (
-            "The uploaded CSV does not match a supported reporting export format. "
-            f"Missing required Power BI phone export columns: {missing}. "
-            "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
-        )
-
-    if result.source_hint == "power_bi" or (power_bi_missing and len(power_bi_missing) <= len(canonical_missing)):
-        missing = ", ".join(power_bi_missing)
-        return (
-            "The uploaded CSV does not match a supported reporting export format. "
-            f"Missing required Power BI ticket export columns: {missing}. "
-            "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
-        )
-
-    missing = ", ".join(canonical_missing)
     return (
-        "The uploaded CSV does not match a supported reporting export format. "
-        f"Missing required canonical columns: {missing}. "
-        "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
+        "Unsupported upload format. Please upload a supported ticket export or phone metrics export."
     )

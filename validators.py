@@ -51,6 +51,24 @@ def _build_normalized_column_lookup(dataframe: pd.DataFrame) -> dict[str, str]:
     return {normalize_header(column_name): str(column_name) for column_name in list(dataframe.columns)}
 
 
+AUTOTASK_CREATED_TICKET_MARKER_GROUPS: dict[str, tuple[str, ...]] = {
+    "ticket_id": ("Task Number",),
+    "company": ("Account Name",),
+    "created": ("Create Timestamp", "Created Date"),
+    "issue_type": ("Issue Type",),
+    "queue": ("Queue Name", "First Queue Name"),
+    "source": ("Source",),
+}
+
+
+def _matches_autotask_created_ticket_export(dataframe: pd.DataFrame) -> bool:
+    normalized_lookup = _build_normalized_column_lookup(dataframe)
+    for candidates in AUTOTASK_CREATED_TICKET_MARKER_GROUPS.values():
+        if not any(normalize_header(candidate) in normalized_lookup for candidate in candidates):
+            return False
+    return True
+
+
 def _power_bi_missing_required_columns(dataframe: pd.DataFrame) -> list[str]:
     normalized_lookup = _build_normalized_column_lookup(dataframe)
     return [
@@ -68,6 +86,14 @@ def _resolve_source_column(normalized_lookup: dict[str, str], expected_name: str
     return normalized_lookup.get(normalize_header(expected_name))
 
 
+def _resolve_first_source_column(normalized_lookup: dict[str, str], *expected_names: str) -> str | None:
+    for expected_name in expected_names:
+        source_column = _resolve_source_column(normalized_lookup, expected_name)
+        if source_column:
+            return source_column
+    return None
+
+
 def _build_created_series_from_power_bi(raw_df: pd.DataFrame, normalized_lookup: dict[str, str]) -> pd.Series:
     timestamp_column = _resolve_source_column(normalized_lookup, "Create Timestamp")
     created_series = pd.to_datetime(raw_df.get(timestamp_column), errors="coerce") if timestamp_column else pd.Series(pd.NaT, index=raw_df.index)
@@ -82,6 +108,78 @@ def _build_created_series_from_power_bi(raw_df: pd.DataFrame, normalized_lookup:
         created_series = created_series.fillna(fallback_dates)
 
     return created_series
+
+
+def _normalize_autotask_created_ticket_export(dataframe: pd.DataFrame) -> DataValidationResult:
+    normalized_lookup = _build_normalized_column_lookup(dataframe)
+    prepared = pd.DataFrame(index=dataframe.index)
+    column_mapping: dict[str, str] = {}
+
+    direct_mappings: dict[str, tuple[str, ...]] = {
+        "Ticket Number": ("Task Number", "Ticket Number"),
+        "Nexus Ticket Number": ("Parent Task Number", "Task ID", "Nexus Ticket Number"),
+        "Company": ("Account Name", "Company"),
+        "Parent Account": ("Parent Account Name", "Parent Account"),
+        "Source": ("Source",),
+        "Status": ("Task Status", "Status"),
+        "Queue": ("Queue Name", "First Queue Name", "Queue"),
+        "Issue Type": ("Issue Type",),
+        "Sub-Issue Type": ("Sub Issue Type", "Sub-Issue Type"),
+        "Take Back Event": ("Take Back Event",),
+        "Take Back Count": ("Take Back Count",),
+        "Pickup SLO Status": ("Pickup SLO Status",),
+    }
+
+    for canonical_name, candidate_columns in direct_mappings.items():
+        source_column = _resolve_first_source_column(normalized_lookup, *candidate_columns)
+        if not source_column:
+            continue
+        prepared[canonical_name] = dataframe[source_column]
+        column_mapping[source_column] = canonical_name
+
+    prepared["Created"] = _build_created_series_from_power_bi(dataframe, normalized_lookup)
+    created_source_column = _resolve_first_source_column(normalized_lookup, "Create Timestamp", "Created Date")
+    if created_source_column:
+        column_mapping[created_source_column] = "Created"
+
+    prepared["Complete Date"] = pd.NaT
+    prepared["Escalation Reason"] = ""
+    prepared["Title"] = ""
+
+    for required in REQUIRED_COLUMNS:
+        if required not in prepared.columns:
+            prepared[required] = ""
+
+    for column_name in prepared.columns:
+        if prepared[column_name].dtype == object:
+            prepared[column_name] = prepared[column_name].fillna("").astype(str).str.strip()
+
+    for date_column in ("Created", "Complete Date"):
+        prepared[date_column] = pd.to_datetime(prepared[date_column], errors="coerce")
+
+    completion_dates = pd.to_datetime(prepared.get("Complete Date"), errors="coerce")
+    completion_metrics_available = bool(completion_dates.notna().any())
+    normalization_notes: list[str] = []
+    if not completion_metrics_available:
+        normalization_notes.append(
+            "True completion timestamps were not present in the upload, so completion-based metrics were omitted."
+        )
+
+    prepared.attrs["source_schema"] = "canonical_created_ticket"
+    prepared.attrs["source_label"] = SOURCE_SCHEMA_LABELS["canonical_created_ticket"]
+    prepared.attrs["completion_semantics"] = "source_completion" if completion_metrics_available else "not_available"
+    prepared.attrs["report_basis"] = "created_ticket"
+    prepared.attrs["completion_metrics_available"] = completion_metrics_available
+    prepared.attrs["normalization_notes"] = normalization_notes
+
+    return DataValidationResult(
+        dataframe=prepared,
+        column_mapping=column_mapping,
+        missing_columns=[],
+        source_schema="canonical_created_ticket",
+        source_label=SOURCE_SCHEMA_LABELS["canonical_created_ticket"],
+        normalization_notes=normalization_notes,
+    )
 
 
 def _normalize_power_bi_ticket_export(dataframe: pd.DataFrame) -> DataValidationResult:
@@ -153,6 +251,9 @@ def _normalize_power_bi_ticket_export(dataframe: pd.DataFrame) -> DataValidation
 def validate_and_prepare_dataframe(dataframe: pd.DataFrame) -> DataValidationResult:
     if dataframe.empty:
         raise ValidationError("The selected CSV file is empty.")
+
+    if _matches_autotask_created_ticket_export(dataframe):
+        return _normalize_autotask_created_ticket_export(dataframe)
 
     if _matches_power_bi_ticket_export(dataframe):
         return _normalize_power_bi_ticket_export(dataframe)
