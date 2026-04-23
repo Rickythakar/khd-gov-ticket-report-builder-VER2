@@ -4,9 +4,16 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from validators import (
+from phone_schema_reference import (
+    PHONE_SOURCE_SCHEMA,
+    POWER_BI_PHONE_REQUIRED_SOURCE_COLUMNS,
+    POWER_BI_PHONE_TO_CANONICAL_MAP,
+)
+from schema_reference import (
     POWER_BI_REQUIRED_SOURCE_COLUMNS,
     POWER_BI_TO_CANONICAL_MAP,
+)
+from validators import (
     build_alias_lookup,
     normalize_header,
 )
@@ -51,6 +58,17 @@ def detect_source_hint(dataframe: pd.DataFrame) -> str:
     if normalized_columns & power_bi_signals:
         return "power_bi"
 
+    phone_signals = {
+        "call id",
+        "call timestamp",
+        "queue wait time sec",
+        "service level category",
+        "answered",
+        "abandoned",
+    }
+    if normalized_columns & phone_signals:
+        return "power_bi_phone"
+
     autotask_signals = {
         "ticket #",
         "service ticket number",
@@ -82,9 +100,19 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
         for column_name in POWER_BI_REQUIRED_SOURCE_COLUMNS
         if normalize_header(column_name) not in normalized_columns
     ]
+    phone_missing = [
+        column_name
+        for column_name in POWER_BI_PHONE_REQUIRED_SOURCE_COLUMNS
+        if normalize_header(column_name) not in normalized_columns
+    ]
     power_bi_mapped_columns = {
         normalized_columns[normalize_header(source_name)]: canonical_name
         for source_name, canonical_name in POWER_BI_TO_CANONICAL_MAP.items()
+        if normalize_header(source_name) in normalized_columns
+    }
+    phone_mapped_columns = {
+        normalized_columns[normalize_header(source_name)]: canonical_name
+        for source_name, canonical_name in POWER_BI_PHONE_TO_CANONICAL_MAP.items()
         if normalize_header(source_name) in normalized_columns
     }
 
@@ -99,6 +127,7 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
             schema_candidates={
                 "canonical_created_ticket": [],
                 "power_bi_ticket_export": power_bi_missing,
+                PHONE_SOURCE_SCHEMA: phone_missing,
             },
         )
 
@@ -117,6 +146,26 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
             schema_candidates={
                 "canonical_created_ticket": missing_required,
                 "power_bi_ticket_export": [],
+                PHONE_SOURCE_SCHEMA: phone_missing,
+            },
+        )
+
+    if not phone_missing:
+        matched_phone_columns = [
+            POWER_BI_PHONE_TO_CANONICAL_MAP.get(column_name, column_name)
+            for column_name in POWER_BI_PHONE_REQUIRED_SOURCE_COLUMNS
+        ]
+        return SupportedUploadValidationResult(
+            is_supported=True,
+            matched_required_columns=matched_phone_columns,
+            missing_required_columns=[],
+            mapped_columns=phone_mapped_columns,
+            source_hint=detect_source_hint(dataframe),
+            accepted_schema=PHONE_SOURCE_SCHEMA,
+            schema_candidates={
+                "canonical_created_ticket": missing_required,
+                "power_bi_ticket_export": power_bi_missing,
+                PHONE_SOURCE_SCHEMA: [],
             },
         )
 
@@ -130,6 +179,7 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
         schema_candidates={
             "canonical_created_ticket": missing_required,
             "power_bi_ticket_export": power_bi_missing,
+            PHONE_SOURCE_SCHEMA: phone_missing,
         },
     )
 
@@ -137,17 +187,26 @@ def validate_supported_upload_schema(dataframe: pd.DataFrame) -> SupportedUpload
 def build_unsupported_upload_message(result: SupportedUploadValidationResult) -> str:
     canonical_missing = result.schema_candidates.get("canonical_created_ticket", result.missing_required_columns)
     power_bi_missing = result.schema_candidates.get("power_bi_ticket_export", [])
+    phone_missing = result.schema_candidates.get(PHONE_SOURCE_SCHEMA, [])
+    if result.source_hint == "power_bi_phone" or (phone_missing and len(phone_missing) <= len(canonical_missing) and len(phone_missing) <= len(power_bi_missing or ["x"])):
+        missing = ", ".join(phone_missing)
+        return (
+            "The uploaded CSV does not match a supported reporting export format. "
+            f"Missing required Power BI phone export columns: {missing}. "
+            "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
+        )
+
     if result.source_hint == "power_bi" or (power_bi_missing and len(power_bi_missing) <= len(canonical_missing)):
         missing = ", ".join(power_bi_missing)
         return (
-            "The uploaded CSV does not match a supported created-ticket export format. "
+            "The uploaded CSV does not match a supported reporting export format. "
             f"Missing required Power BI ticket export columns: {missing}. "
-            "Supported uploads are either the canonical created-ticket export or the mapped Power BI ticket export."
+            "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
         )
 
     missing = ", ".join(canonical_missing)
     return (
-        "The uploaded CSV does not match a supported created-ticket export format. "
+        "The uploaded CSV does not match a supported reporting export format. "
         f"Missing required canonical columns: {missing}. "
-        "Supported uploads are either the canonical created-ticket export or the mapped Power BI ticket export."
+        "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
     )

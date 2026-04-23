@@ -5,6 +5,12 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from config import COLUMN_ALIASES, REQUIRED_COLUMNS
+from schema_reference import (
+    POWER_BI_NORMALIZATION_NOTES,
+    POWER_BI_REQUIRED_SOURCE_COLUMNS,
+    POWER_BI_TO_CANONICAL_MAP,
+    SOURCE_SCHEMA_LABELS,
+)
 
 
 class ValidationError(Exception):
@@ -17,48 +23,8 @@ class DataValidationResult:
     column_mapping: dict[str, str]
     missing_columns: list[str]
     source_schema: str = "canonical_created_ticket"
+    source_label: str = SOURCE_SCHEMA_LABELS["canonical_created_ticket"]
     normalization_notes: list[str] = field(default_factory=list)
-
-
-POWER_BI_REQUIRED_SOURCE_COLUMNS = [
-    "My Value",
-    "KHD Ticket Number",
-    "Partner",
-    "Client",
-    "Source",
-    "Create Timestamp",
-    "Created Date",
-    "Task Status",
-    "Queue Name",
-    "Issue Type",
-    "Pickup SLO Status",
-]
-
-POWER_BI_OPTIONAL_SOURCE_COLUMNS = [
-    "MSP Ticket Number",
-    "Timezone",
-    "Created Hour",
-    "Take Back",
-    "Take Back Count",
-    "Sub Issue Type",
-]
-
-POWER_BI_TO_CANONICAL_MAP: dict[str, str] = {
-    "My Value": "Title",
-    "KHD Ticket Number": "Ticket Number",
-    "MSP Ticket Number": "Nexus Ticket Number",
-    "Partner": "Parent Account",
-    "Client": "Company",
-    "Source": "Source",
-    "Task Status": "Status",
-    "Queue Name": "Queue",
-    "Issue Type": "Issue Type",
-    "Sub Issue Type": "Sub-Issue Type",
-    "Timezone": "Account Timezone",
-    "Take Back": "Take Back Event",
-    "Take Back Count": "Take Back Count",
-    "Pickup SLO Status": "Pickup SLO Status",
-}
 
 
 def normalize_header(value: str) -> str:
@@ -130,12 +96,7 @@ def _normalize_power_bi_ticket_export(dataframe: pd.DataFrame) -> DataValidation
     normalized_lookup = _build_normalized_column_lookup(dataframe)
     prepared = pd.DataFrame(index=dataframe.index)
     column_mapping: dict[str, str] = {}
-    normalization_notes = [
-        "Power BI ticket export mapped into the canonical created-ticket schema.",
-        "Title derived from My Value.",
-        "Complete Date derived from Created because the Power BI export does not include a completion timestamp.",
-        "Escalation Reason defaulted to blank because the Power BI export does not include that field.",
-    ]
+    normalization_notes = list(POWER_BI_NORMALIZATION_NOTES)
 
     for source_name, canonical_name in POWER_BI_TO_CANONICAL_MAP.items():
         source_column = _resolve_source_column(normalized_lookup, source_name)
@@ -158,7 +119,7 @@ def _normalize_power_bi_ticket_export(dataframe: pd.DataFrame) -> DataValidation
             "The Power BI ticket export could not be normalized because no valid created timestamps were found."
         )
 
-    prepared["Complete Date"] = prepared["Created"]
+    prepared["Complete Date"] = pd.NaT
     prepared["Escalation Reason"] = ""
 
     for required in REQUIRED_COLUMNS:
@@ -172,11 +133,19 @@ def _normalize_power_bi_ticket_export(dataframe: pd.DataFrame) -> DataValidation
     for date_column in ("Created", "Complete Date"):
         prepared[date_column] = pd.to_datetime(prepared[date_column], errors="coerce")
 
+    prepared.attrs["source_schema"] = "power_bi_ticket_export"
+    prepared.attrs["source_label"] = SOURCE_SCHEMA_LABELS["power_bi_ticket_export"]
+    prepared.attrs["completion_semantics"] = "not_available"
+    prepared.attrs["report_basis"] = "created_ticket"
+    prepared.attrs["completion_metrics_available"] = False
+    prepared.attrs["normalization_notes"] = normalization_notes
+
     return DataValidationResult(
         dataframe=prepared,
         column_mapping=column_mapping,
         missing_columns=[],
         source_schema="power_bi_ticket_export",
+        source_label=SOURCE_SCHEMA_LABELS["power_bi_ticket_export"],
         normalization_notes=normalization_notes,
     )
 
@@ -221,8 +190,26 @@ def validate_and_prepare_dataframe(dataframe: pd.DataFrame) -> DataValidationRes
         if date_column in prepared.columns:
             prepared[date_column] = pd.to_datetime(prepared[date_column], errors="coerce")
 
+    completion_dates = pd.to_datetime(prepared.get("Complete Date"), errors="coerce")
+    completion_metrics_available = bool(completion_dates.notna().any())
+    normalization_notes: list[str] = []
+    if not completion_metrics_available:
+        normalization_notes.append(
+            "True completion timestamps were not present in the upload, so completion-based metrics were omitted."
+        )
+
+    prepared.attrs["source_schema"] = "canonical_created_ticket"
+    prepared.attrs["source_label"] = SOURCE_SCHEMA_LABELS["canonical_created_ticket"]
+    prepared.attrs["completion_semantics"] = "source_completion" if completion_metrics_available else "not_available"
+    prepared.attrs["report_basis"] = "created_ticket"
+    prepared.attrs["completion_metrics_available"] = completion_metrics_available
+    prepared.attrs["normalization_notes"] = normalization_notes
+
     return DataValidationResult(
         dataframe=prepared,
         column_mapping=column_mapping,
         missing_columns=missing_columns,
+        source_schema="canonical_created_ticket",
+        source_label=SOURCE_SCHEMA_LABELS["canonical_created_ticket"],
+        normalization_notes=normalization_notes,
     )

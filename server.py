@@ -25,6 +25,8 @@ from ai_engine import AIAnalysisResult, AIEngine, serialize_ai_results  # noqa: 
 from comparison import bucket_by_month, compute_comparison, serialize_comparison
 from config import APP_NAME, APP_VERSION, DEFAULT_LOGO_PATH, REPORT_MODE_CUSTOMER, REPORT_MODE_INTERNAL
 from metrics import format_minutes
+from phone_artifacts import build_phone_report_artifacts, infer_phone_date_range, infer_phone_partner_name
+from phone_validators import validate_and_prepare_phone_dataframe
 from settings import (
     load_settings,
     save_settings,
@@ -58,8 +60,11 @@ def render_template(template_name: str, context: dict) -> str:
 
 # In-memory state (single-user local app)
 _state: dict = {
+    "ticket_df": None,
+    "phone_df": None,
     "prepared_df": None,
     "artifacts": None,
+    "phone_artifacts": None,
     "settings": load_settings(),
     "partner_name": "",
     "date_range": "",
@@ -67,8 +72,21 @@ _state: dict = {
     "output_filename": "",
     "error": "",
     "csv_name": "",
+    "ticket_csv_names": [],
+    "phone_csv_names": [],
+    "source_label": "",
+    "normalization_notes": [],
+    "ticket_source_label": "",
+    "phone_source_label": "",
+    "ticket_normalization_notes": [],
+    "phone_normalization_notes": [],
+    "phone_partner_name": "",
+    "phone_date_range": "",
+    "phone_report_title": "",
+    "phone_output_filename": "",
     # Multi-month comparison
     "all_dfs": [],           # list of (filename, DataFrame) tuples
+    "phone_dfs": [],         # list of (filename, DataFrame) tuples
     "buckets": [],           # MonthBucket list
     "comparison": None,      # PeriodComparison
     "period": "1M",          # current period selection
@@ -233,6 +251,8 @@ def _serialize_artifacts(artifacts, comparison=None) -> dict:
 
     return {
         "report_mode": artifacts.report_mode,
+        "report_basis": artifacts.report_basis,
+        "completion_metrics_available": artifacts.completion_metrics_available,
         "headline_metrics": artifacts.headline_metrics,
         "narrative": artifacts.narrative,
         "executive_brief": artifacts.executive_brief,
@@ -300,6 +320,28 @@ def _serialize_artifacts(artifacts, comparison=None) -> dict:
         "sparks": _build_sparklines(artifacts, comparison),
         # P8: Advanced analytics (internal mode only)
         "analytics": _serialize_analytics(artifacts.advanced_analytics),
+    }
+
+
+def _serialize_phone_artifacts(artifacts) -> dict:
+    if artifacts is None:
+        return {}
+
+    def df_to_records(df):
+        if df is None or (hasattr(df, "empty") and df.empty):
+            return []
+        return json.loads(df.to_json(orient="records", date_format="iso", default_handler=str))
+
+    return {
+        "headline_metrics": artifacts.headline_metrics,
+        "narrative": artifacts.narrative,
+        "data_quality_notes": artifacts.data_quality_notes,
+        "queue_table": df_to_records(artifacts.queue_table),
+        "disposition_table": df_to_records(artifacts.disposition_table),
+        "campaign_table": df_to_records(artifacts.campaign_table),
+        "hourly_volume_table": df_to_records(artifacts.hourly_volume_table),
+        "daily_volume_table": df_to_records(artifacts.daily_volume_table),
+        "service_level_table": df_to_records(artifacts.service_level_table),
     }
 
 
@@ -464,6 +506,33 @@ def _build_partner_email_message(partner_name: str, date_range: str, report_titl
     )
 
 
+def _build_phone_report_title(partner_name: str, date_range: str) -> str:
+    partner = str(partner_name or "").strip()
+    period = str(date_range or "").strip()
+    if partner and period:
+        return f"{APP_NAME} Phone Report {period} - {partner}"
+    if period:
+        return f"{APP_NAME} Phone Report {period}"
+    if partner:
+        return f"{APP_NAME} Phone Report - {partner}"
+    return f"{APP_NAME} Phone Report"
+
+
+def _resolve_export_overrides(
+    *,
+    default_title: str,
+    default_filename: str,
+    requested_title: str = "",
+    requested_filename: str = "",
+) -> tuple[str, str]:
+    export_title = str(requested_title or "").strip() or str(default_title or "").strip()
+    requested_name = str(requested_filename or "").strip()
+    if requested_name:
+        requested_name = Path(requested_name).stem.strip()
+    export_filename = default_filename_from_title(requested_name or export_title or default_filename)
+    return export_title or default_title, export_filename or default_filename
+
+
 def _default_include_trends_tab() -> bool:
     return False
 
@@ -485,6 +554,9 @@ async def index(request: Request):
     settings = _state["settings"]
     ai_enabled = is_ai_enabled(settings)
     artifacts_data = _serialize_artifacts(_state["artifacts"], _state.get("comparison"))
+    phone_data = _serialize_phone_artifacts(_state.get("phone_artifacts"))
+    has_ticket_data = _state.get("prepared_df") is not None and _state.get("artifacts") is not None
+    has_phone_data = _state.get("phone_df") is not None and _state.get("phone_artifacts") is not None
     html_content = render_template("dashboard.html", {
         "app_name": APP_NAME,
         "app_version": APP_VERSION,
@@ -495,6 +567,12 @@ async def index(request: Request):
         "report_title": _state["report_title"],
         "output_filename": _state["output_filename"],
         "csv_name": _state["csv_name"],
+        "source_label": _state.get("source_label", ""),
+        "normalization_notes": _state.get("normalization_notes", []),
+        "ticket_source_label": _state.get("ticket_source_label", ""),
+        "phone_source_label": _state.get("phone_source_label", ""),
+        "ticket_normalization_notes": _state.get("ticket_normalization_notes", []),
+        "phone_normalization_notes": _state.get("phone_normalization_notes", []),
         "partner_email_message": _build_partner_email_message(
             _state["partner_name"],
             _state["date_range"],
@@ -505,8 +583,14 @@ async def index(request: Request):
         "include_daily_volume_default": _default_include_daily_volume_tab(),
         "include_slo_default": _default_include_slo_tab(),
         "error": _state["error"],
-        "has_data": _state["artifacts"] is not None,
+        "has_data": has_ticket_data,
+        "has_ticket_data": has_ticket_data,
+        "has_phone_data": has_phone_data,
+        "has_any_data": has_ticket_data or has_phone_data,
+        "ticket_completion_metrics_available": bool(getattr(_state.get("artifacts"), "completion_metrics_available", False)),
+        "combined_export_available": False,
         "a": artifacts_data,
+        "phone": phone_data,
         "MODE_CUSTOMER": MODE_CUSTOMER,
         "MODE_INTERNAL": MODE_INTERNAL,
         "period": _state.get("period", "1M"),
@@ -514,6 +598,7 @@ async def index(request: Request):
         "available_months": [b.label for b in _state.get("buckets", [])],
         "comp": serialize_comparison(_state["comparison"]) if _state.get("comparison") else {"has_comparison": False},
         "file_count": len(_state.get("all_dfs", [])),
+        "phone_file_count": len(_state.get("phone_dfs", [])),
         "ai": serialize_ai_results(_state.get("ai_results") if ai_enabled else None),
         "ai_enabled": ai_enabled,
     })
@@ -532,8 +617,16 @@ async def upload_csv(file: list[UploadFile] = File(...)):
                 status_code=400,
             )
 
-        staged_dfs: list[tuple[str, pd.DataFrame]] = []
-        staged_csv_names: list[str] = []
+        staged_ticket_dfs: list[tuple[str, pd.DataFrame]] = []
+        staged_ticket_csv_names: list[str] = []
+        staged_phone_dfs: list[tuple[str, pd.DataFrame]] = []
+        staged_phone_csv_names: list[str] = []
+        ticket_labels: set[str] = set()
+        phone_labels: set[str] = set()
+        ticket_notes: list[str] = []
+        phone_notes: list[str] = []
+        last_ticket_result = None
+        last_phone_result = None
 
         for upload in uploads:
             contents = await upload.read()
@@ -542,60 +635,103 @@ async def upload_csv(file: list[UploadFile] = File(...)):
             schema_result = validate_supported_upload_schema(raw_df)
             if not schema_result.is_supported:
                 logger.warning(
-                    "Upload rejected for %s because it does not match a supported created-ticket export format. Canonical missing: %s. Power BI missing: %s. Source hint: %s",
+                    "Upload rejected for %s because it does not match a supported reporting export format. Canonical missing: %s. Power BI ticket missing: %s. Power BI phone missing: %s. Source hint: %s",
                     fname or "<unknown>",
                     schema_result.schema_candidates.get("canonical_created_ticket", []),
                     schema_result.schema_candidates.get("power_bi_ticket_export", []),
+                    schema_result.schema_candidates.get("powerbi_phone_export", []),
                     schema_result.source_hint,
                 )
                 raise ValidationError(build_unsupported_upload_message(schema_result))
 
-            result = validate_and_prepare_dataframe(raw_df)
-            prepared_df = result.dataframe
+            if schema_result.accepted_schema == "powerbi_phone_export":
+                result = validate_and_prepare_phone_dataframe(raw_df)
+                prepared_df = result.dataframe
+                staged_phone_dfs.append((fname, prepared_df))
+                staged_phone_csv_names.append(fname)
+                phone_labels.add(result.source_label)
+                for note in result.normalization_notes:
+                    if note not in phone_notes:
+                        phone_notes.append(note)
+                last_phone_result = result
+            else:
+                result = validate_and_prepare_dataframe(raw_df)
+                prepared_df = result.dataframe
+                staged_ticket_dfs.append((fname, prepared_df))
+                staged_ticket_csv_names.append(fname)
+                ticket_labels.add(result.source_label)
+                for note in result.normalization_notes:
+                    if note not in ticket_notes:
+                        ticket_notes.append(note)
+                last_ticket_result = result
+
             logger.info(
-                "Accepted upload %s using %s normalization path.",
+                "Accepted upload %s using %s normalization path (%s).",
                 fname or "<unknown>",
                 result.source_schema,
+                result.source_label,
             )
 
             print(f"[UPLOAD] {fname}: {len(prepared_df)} rows, {len(raw_df)} raw rows")
 
-            existing_idx = next((i for i, (n, _) in enumerate(staged_dfs) if n == fname), None)
-            if existing_idx is not None:
-                print(f"[UPLOAD] Replacing existing {fname}")
-                staged_dfs[existing_idx] = (fname, prepared_df)
-            else:
-                print(f"[UPLOAD] New file {fname}")
-                staged_dfs.append((fname, prepared_df))
-                staged_csv_names.append(fname)
+        if staged_ticket_dfs:
+            total_ticket_dfs = [(n, len(df)) for n, df in staged_ticket_dfs]
+            print(f"[UPLOAD] Ticket lane has {len(total_ticket_dfs)} files: {total_ticket_dfs}")
+            combined_ticket = pd.concat([df for _, df in staged_ticket_dfs], ignore_index=True)
+            print(f"[UPLOAD] Ticket lane combined: {len(combined_ticket)} rows")
 
-        # Combine all uploaded data
-        total_dfs = [(n, len(df)) for n, df in staged_dfs]
-        print(f"[UPLOAD] State has {len(total_dfs)} files: {total_dfs}")
-        combined = pd.concat([df for _, df in staged_dfs], ignore_index=True)
-        print(f"[UPLOAD] Combined: {len(combined)} rows")
+            ticket_csv_name = ", ".join(staged_ticket_csv_names[-3:])
+            if len(staged_ticket_csv_names) > 3:
+                ticket_csv_name = f"{len(staged_ticket_csv_names)} ticket files loaded"
 
-        csv_name = ", ".join(staged_csv_names[-3:])
-        if len(staged_csv_names) > 3:
-            csv_name = f"{len(staged_csv_names)} files loaded"
+            buckets = bucket_by_month(combined_ticket)
+            period = _state.get("period", "1M")
+            comparison = compute_comparison(buckets, period=period)
+            period_payload = _build_period_dashboard_payload(
+                buckets,
+                period=period,
+                selected_month=_state.get("selected_month", ""),
+                settings=_state["settings"],
+            )
 
-        # Build monthly buckets and comparison
-        buckets = bucket_by_month(combined)
-        period = _state.get("period", "1M")
-        comparison = compute_comparison(buckets, period=period)
-        period_payload = _build_period_dashboard_payload(
-            buckets,
-            period=period,
-            selected_month=_state.get("selected_month", ""),
-            settings=_state["settings"],
-        )
+            _state["ticket_df"] = combined_ticket
+            _state["all_dfs"] = staged_ticket_dfs
+            _state["csv_names"] = staged_ticket_csv_names
+            _state["ticket_csv_names"] = staged_ticket_csv_names
+            _state["csv_name"] = ticket_csv_name
+            _state["buckets"] = buckets
+            _state["comparison"] = comparison
+            _state.update(period_payload)
+            _state["ticket_source_label"] = list(ticket_labels)[0] if len(ticket_labels) == 1 else "Multiple ticket sources"
+            _state["ticket_normalization_notes"] = ticket_notes
+            _state["source_label"] = _state["ticket_source_label"]
+            _state["normalization_notes"] = ticket_notes
 
-        _state["all_dfs"] = staged_dfs
-        _state["csv_names"] = staged_csv_names
-        _state["csv_name"] = csv_name
-        _state["buckets"] = buckets
-        _state["comparison"] = comparison
-        _state.update(period_payload)
+        if staged_phone_dfs:
+            total_phone_dfs = [(n, len(df)) for n, df in staged_phone_dfs]
+            print(f"[UPLOAD] Phone lane has {len(total_phone_dfs)} files: {total_phone_dfs}")
+            combined_phone = pd.concat([df for _, df in staged_phone_dfs], ignore_index=True)
+            print(f"[UPLOAD] Phone lane combined: {len(combined_phone)} rows")
+
+            _state["phone_df"] = combined_phone
+            _state["phone_dfs"] = staged_phone_dfs
+            _state["phone_csv_names"] = staged_phone_csv_names
+            _state["phone_artifacts"] = build_phone_report_artifacts(combined_phone)
+            _state["phone_source_label"] = list(phone_labels)[0] if len(phone_labels) == 1 else "Multiple phone sources"
+            _state["phone_normalization_notes"] = phone_notes
+            _state["phone_partner_name"] = infer_phone_partner_name(combined_phone)
+            _state["phone_date_range"] = infer_phone_date_range(combined_phone)
+            _state["phone_report_title"] = _build_phone_report_title(_state["phone_partner_name"], _state["phone_date_range"])
+            _state["phone_output_filename"] = default_filename_from_title(_state["phone_report_title"])
+            if not staged_ticket_dfs and _state.get("prepared_df") is None:
+                _state["partner_name"] = _state["phone_partner_name"]
+                _state["date_range"] = _state["phone_date_range"]
+                _state["report_title"] = _state["phone_report_title"]
+                _state["output_filename"] = _state["phone_output_filename"]
+                _state["csv_name"] = ", ".join(staged_phone_csv_names[-3:]) if staged_phone_csv_names else ""
+                _state["source_label"] = _state["phone_source_label"]
+                _state["normalization_notes"] = phone_notes
+
         _state["error"] = ""
         _clear_ai_cache()
 
@@ -607,8 +743,8 @@ async def upload_csv(file: list[UploadFile] = File(...)):
     except Exception as e:
         logger.exception("Unexpected upload failure while reading CSV.")
         _state["error"] = (
-            "The uploaded CSV does not match a supported created-ticket export format. "
-            "Supported uploads are either the canonical created-ticket export or the mapped Power BI ticket export."
+            "The uploaded CSV does not match a supported reporting export format. "
+            "Supported uploads are canonical ticket exports, mapped Power BI ticket exports, or Power BI phone exports."
         )
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
 
@@ -641,16 +777,32 @@ async def set_month(month: str):
 
 @app.post("/clear")
 async def clear_data():
+    _state["ticket_df"] = None
+    _state["phone_df"] = None
     _state["all_dfs"] = []
+    _state["phone_dfs"] = []
     _state["csv_names"] = []
+    _state["ticket_csv_names"] = []
+    _state["phone_csv_names"] = []
     _state["buckets"] = []
     _state["comparison"] = None
     _state["prepared_df"] = None
     _state["artifacts"] = None
+    _state["phone_artifacts"] = None
     _state["csv_name"] = ""
     _state["partner_name"] = ""
     _state["date_range"] = ""
     _state["error"] = ""
+    _state["source_label"] = ""
+    _state["normalization_notes"] = []
+    _state["ticket_source_label"] = ""
+    _state["phone_source_label"] = ""
+    _state["ticket_normalization_notes"] = []
+    _state["phone_normalization_notes"] = []
+    _state["phone_partner_name"] = ""
+    _state["phone_date_range"] = ""
+    _state["phone_report_title"] = ""
+    _state["phone_output_filename"] = ""
     _clear_ai_cache()
     return JSONResponse({"status": "ok"})
 
@@ -913,7 +1065,10 @@ async def export_workbook(
     include_heatmap: str = "0",
     include_daily_volume: str = "0",
     include_slo: str = "0",
+    include_phone_metrics: str = "0",
     monthly_ticket_report_mode: str = "0",
+    report_title: str = "",
+    filename: str = "",
 ):
     if _state["prepared_df"] is None:
         return JSONResponse({"error": "No data"}, status_code=400)
@@ -925,7 +1080,8 @@ async def export_workbook(
     include_trends_tab = include_trends == "1"
     include_heatmap_tab = include_heatmap == "1"
     include_daily_volume_tab = include_daily_volume == "1"
-    include_slo_tab = include_slo == "1"
+    include_slo_tab = include_slo == "1" and bool(getattr(_state.get("artifacts"), "completion_metrics_available", False))
+    include_phone_metrics_tab = include_phone_metrics == "1" and _state.get("phone_df") is not None
     monthly_mode_enabled = monthly_ticket_report_mode == "1"
 
     export_df = _state["prepared_df"]
@@ -948,6 +1104,15 @@ async def export_workbook(
         base_filename = default_filename_from_title(export_report_title)[:72].rstrip("_") or "khd_ticket_report"
         export_filename = f"{base_filename}_Monthly_Ticket_Report"
 
+    export_report_title, export_filename = _resolve_export_overrides(
+        default_title=export_report_title,
+        default_filename=export_filename,
+        requested_title=report_title,
+        requested_filename=filename,
+    )
+    if monthly_mode_enabled:
+        export_filename = f"{export_filename}_Monthly_Ticket_Report" if not export_filename.endswith("_Monthly_Ticket_Report") else export_filename
+
     export_dir = BASE_DIR / ".tmp_exports"
     export_dir.mkdir(exist_ok=True)
     logo_path = DEFAULT_LOGO_PATH
@@ -969,6 +1134,8 @@ async def export_workbook(
         include_daily_volume=include_daily_volume_tab,
         include_slo=include_slo_tab,
         monthly_ticket_report_mode=monthly_mode_enabled,
+        phone_dataframe=_state.get("phone_df") if include_phone_metrics_tab else None,
+        include_phone_metrics=include_phone_metrics_tab,
     )
     built = builder.build_report(request)
     try:
@@ -984,7 +1151,7 @@ async def export_workbook(
 
 
 @app.get("/export/pdf")
-async def export_pdf(include_ai: str = "1"):
+async def export_pdf(include_ai: str = "1", report_title: str = "", filename: str = ""):
     if _state["artifacts"] is None:
         return JSONResponse({"error": "No data"}, status_code=400)
 
@@ -992,9 +1159,15 @@ async def export_pdf(include_ai: str = "1"):
 
     logo_bytes = DEFAULT_LOGO_PATH.read_bytes() if DEFAULT_LOGO_PATH.exists() else None
     ai_results = _state.get("ai_results") if include_ai == "1" and is_ai_enabled(_state.get("settings")) else None
+    export_report_title, export_filename = _resolve_export_overrides(
+        default_title=_state["report_title"],
+        default_filename=_state["output_filename"],
+        requested_title=report_title,
+        requested_filename=filename,
+    )
     builder = ExecutivePdfSnapshotBuilder()
     pdf_bytes = builder.build_pdf_bytes(
-        report_title=_state["report_title"],
+        report_title=export_report_title,
         partner_name=_state["partner_name"],
         date_range=_state["date_range"],
         artifacts=_state["artifacts"],
@@ -1005,7 +1178,7 @@ async def export_pdf(include_ai: str = "1"):
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{_state["output_filename"]}_Executive_Snapshot.pdf"'},
+        headers={"Content-Disposition": f'attachment; filename="{export_filename}_Executive_Snapshot.pdf"'},
     )
 
 
